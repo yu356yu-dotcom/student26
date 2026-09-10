@@ -1,1625 +1,804 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>مؤشرات التوجيه الطلابي</title>
-
-<style>
-
-:root {
-    --main-color: #6f58a8;
-    --background-color: #f5f3fa;
-    --card-color: #ffffff;
-    --text-color: #222222;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: Tahoma, Arial, sans-serif;
-    background: var(--background-color);
-    color: var(--text-color);
-    transition: background 0.3s;
-}
-
-
-/* رأس الصفحة */
-
-header {
-    background: var(--main-color);
-    color: white;
-    padding: 30px 15px;
-    text-align: center;
-    transition: background 0.3s;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 30px;
-}
-
-header p {
-    margin: 8px 0 0;
-}
-
-
-/* الحاوية */
-
-.container {
-    width: 95%;
-    max-width: 1100px;
-    margin: 25px auto 60px;
-}
-
-
-/* ملاحظة */
-
-.note {
-    background: #fff8e1;
-    border: 1px solid #ffe0a3;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    line-height: 1.8;
-}
-
-
-/* الأزرار */
-
-button {
-    border: none;
-    border-radius: 10px;
-    padding: 11px 16px;
-    font-family: inherit;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-.main-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.main-button {
-    background: var(--main-color);
-    color: white;
-}
-
-
-/* إعدادات الألوان */
-
-.color-settings {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 25px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-}
-
-.color-settings h3 {
-    text-align: center;
-    margin-top: 0;
-}
-
-.color-controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-}
-
-.color-controls label {
-    font-weight: bold;
-}
-
-input[type="color"] {
-    width: 60px;
-    height: 42px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    vertical-align: middle;
-}
-
-.apply-color {
-    background: var(--main-color);
-    color: white;
-}
-
-.reset-color {
-    background: #555;
-    color: white;
-}
-
-
-/* المؤشر */
-
-.indicator {
-    background: var(--card-color);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-
-    border-right:
-    7px solid var(--main-color);
-
-    box-shadow:
-    0 4px 15px rgba(0,0,0,0.08);
-}
-
-.indicator-title {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-
-.number {
-    min-width: 44px;
-    width: 44px;
-    height: 44px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 12px;
-
-    background: var(--main-color);
-    color: white;
-
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.indicator-title h3 {
-    margin: 3px 0 0;
-    line-height: 1.8;
-    font-size: 18px;
-}
-
-
-/* التقرير */
-
-.report-label,
-.image-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-textarea {
-    width: 100%;
-    min-height: 150px;
-
-    padding: 13px;
-
-    border: 1px solid #ccc;
-    border-radius: 10px;
-
-    font-family: inherit;
-    font-size: 15px;
-    line-height: 1.8;
-
-    resize: vertical;
-}
-
-textarea:focus {
-    outline: none;
-    border-color: var(--main-color);
-}
-
-textarea:disabled {
-    background: #eeeeee;
-    color: #555;
-}
-
-
-/* أزرار المؤشر */
-
-.indicator-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-
-    margin-top: 12px;
-    margin-bottom: 18px;
-}
-
-.unlock-btn {
-    background: var(--main-color);
-    color: white;
-}
-
-.save-btn {
-    background: #2e7d32;
-    color: white;
-}
-
-.lock-btn {
-    background: #555;
-    color: white;
-}
-
-
-/* الصور */
-
-input[type="file"] {
-    width: 100%;
-
-    padding: 10px;
-
-    border:
-    1px dashed #aaa;
-
-    border-radius: 10px;
-
-    background: #fafafa;
-}
-
-input[type="file"]:disabled {
-    opacity: 0.5;
-}
-
-.gallery {
-    display: grid;
-
-    grid-template-columns:
-    repeat(auto-fit, minmax(150px,1fr));
-
-    gap: 12px;
-
-    margin-top: 15px;
-}
-
-.image-box {
-    position: relative;
-
-    border-radius: 12px;
-
-    overflow: hidden;
-
-    border: 1px solid #ddd;
-
-    background: #eee;
-}
-
-.image-box img {
-    width: 100%;
-    height: 160px;
-
-    object-fit: cover;
-
-    display: block;
-}
-
-.remove-image {
-    position: absolute;
-
-    top: 6px;
-    left: 6px;
-
-    width: 32px;
-    height: 32px;
-
-    padding: 0;
-
-    border-radius: 50%;
-
-    background: #c62828;
-
-    color: white;
-
-    font-size: 20px;
-
-    display: none;
-}
-
-.unlocked .remove-image {
-    display: block;
-}
-
-.status {
-    margin-top: 10px;
-
-    font-size: 13px;
-
-    color: #666;
-}
-
-
-/* الآيباد والجوال */
-
-@media(max-width:650px) {
-
-    header h1 {
-        font-size: 24px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مؤشرات التوجيه الطلابي</title>
+
+  <style>
+    :root {
+      --main-color: #1f6f5f;
+      --background-color: #f5f7f8;
     }
 
-    .main-buttons {
-        flex-direction: column;
-    }
-
-    .main-buttons button {
-        width: 100%;
-    }
-
-    .color-controls {
-        flex-direction: column;
-    }
-
-    .indicator-buttons button {
-        flex: 1;
-    }
-
-}
-
-
-/* الطباعة */
-
-@media print {
-
-    .main-buttons,
-    .color-settings,
-    .indicator-buttons,
-    input[type="file"],
-    .status,
-    .note,
-    .remove-image {
-        display: none !important;
+    * {
+      box-sizing: border-box;
     }
 
     body {
-        background: white !important;
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: var(--background-color);
+      color: #222;
     }
 
     header {
-        background: white !important;
-        color: black !important;
+      background: var(--main-color);
+      color: white;
+      padding: 22px 15px;
+      text-align: center;
     }
 
-    .indicator {
-        box-shadow: none;
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
 
-        border:
-        1px solid #ccc;
+    header p {
+      margin: 0;
+      opacity: 0.9;
+    }
 
-        page-break-inside: avoid;
+    .container {
+      width: min(1100px, 94%);
+      margin: 20px auto 40px;
+    }
+
+    .top-controls,
+    .color-panel {
+      background: white;
+      padding: 15px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 10px 15px;
+      margin: 4px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .primary-btn {
+      background: var(--main-color);
+      color: white;
+    }
+
+    .secondary-btn {
+      background: #eceff1;
+      color: #222;
+    }
+
+    .print-btn {
+      background: #2563eb;
+      color: white;
+    }
+
+    .delete-btn {
+      background: #b42318;
+      color: white;
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+
+    .indicator-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      border-right: 6px solid var(--main-color);
+    }
+
+    .indicator-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      color: var(--main-color);
     }
 
     textarea {
-        border: none;
-
-        background: white !important;
-
-        color: black !important;
+      width: 100%;
+      min-height: 140px;
+      padding: 12px;
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.8;
+      border: 1px solid #ccd2d7;
+      border-radius: 10px;
+      resize: vertical;
+      background: #fafafa;
     }
 
-}
+    textarea:disabled {
+      background: #f1f3f4;
+      color: #333;
+    }
 
-</style>
+    .controls {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
 
+    input[type="file"] {
+      margin-top: 12px;
+    }
+
+    .gallery {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .image-box {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafafa;
+      padding: 8px;
+    }
+
+    .image-box img {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .image-box .delete-btn {
+      width: 100%;
+      margin-top: 7px;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .locked-note {
+      font-size: 13px;
+      color: #777;
+      margin-top: 7px;
+    }
+
+    @media (max-width: 700px) {
+      header h1 {
+        font-size: 22px;
+      }
+
+      .indicator-title {
+        font-size: 18px;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      .top-controls,
+      .color-panel,
+      button,
+      input[type="file"],
+      .delete-btn {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .indicator-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
-
 
 <body>
 
-
 <header>
-
-<h1>
-مؤشرات التوجيه الطلابي
-</h1>
-
-<p>
-نظام توثيق التقارير والشواهد والصور
-</p>
-
+  <h1>مؤشرات التوجيه الطلابي</h1>
+  <p>نظام توثيق التقارير والشواهد والصور</p>
 </header>
-
 
 <div class="container">
 
+  <div class="top-controls">
+    <button class="primary-btn" onclick="unlockAll()">🔓 فتح تعديل جميع المؤشرات</button>
+    <button class="secondary-btn" onclick="lockAll()">🔒 قفل جميع المؤشرات</button>
+    <button class="print-btn" onclick="window.print()">🖨️ طباعة التقرير كاملًا</button>
+  </div>
 
-<div class="note">
+  <div class="color-panel">
+    <strong>تخصيص ألوان الواجهة</strong>
 
-🔐 جميع عمليات التعديل محمية بكلمة سر.
+    <div class="color-row" style="margin-top:12px;">
+      <label>
+        اللون الرئيسي:
+        <input type="color" id="mainColor" value="#1f6f5f">
+      </label>
 
-<br>
+      <label>
+        لون الخلفية:
+        <input type="color" id="backgroundColor" value="#f5f7f8">
+      </label>
 
-يمكن عرض التقارير والصور بدون كلمة سر،
-أما التعديل والإضافة والحذف وتغيير الألوان
-فتتطلب كلمة السر.
+      <button class="primary-btn" onclick="applyColors()">تطبيق الألوان</button>
+      <button class="secondary-btn" onclick="resetColors()">إعادة الألوان</button>
+    </div>
+  </div>
 
-</div>
-
-
-<!-- الأزرار الرئيسية -->
-
-<div class="main-buttons">
-
-
-<button
-class="main-button"
-onclick="unlockAll()">
-
-🔓 فتح جميع المؤشرات
-
-</button>
-
-
-<button
-class="main-button"
-onclick="lockAll()">
-
-🔒 قفل جميع المؤشرات
-
-</button>
-
-
-<button
-class="main-button"
-onclick="window.print()">
-
-🖨️ طباعة / حفظ PDF
-
-</button>
-
+  <div id="indicatorsContainer"></div>
 
 </div>
-
-
-
-<!-- إعدادات الألوان -->
-
-<div class="color-settings">
-
-
-<h3>
-🎨 تخصيص ألوان الواجهة
-</h3>
-
-
-<div class="color-controls">
-
-
-<label>
-
-اللون الرئيسي
-
-<input
-type="color"
-id="mainColor"
-value="#6f58a8">
-
-</label>
-
-
-<label>
-
-لون الخلفية
-
-<input
-type="color"
-id="backgroundColor"
-value="#f5f3fa">
-
-</label>
-
-
-<button
-class="apply-color"
-onclick="changeColorsWithPassword()">
-
-🔐 تطبيق الألوان
-
-</button>
-
-
-<button
-class="reset-color"
-onclick="resetColorsWithPassword()">
-
-↩️ الألوان الافتراضية
-
-</button>
-
-
-</div>
-
-
-</div>
-
-
-
-<!-- مكان المؤشرات -->
-
-<div id="indicatorsContainer">
-
-</div>
-
-
-</div>
-
-
 
 <script>
-
-
-/* =====================================
-   كلمة السر
-===================================== */
-
-const password = "html1234";
-
-
-/* =====================================
-   مؤشرات التوجيه الطلابي
-===================================== */
-
-const indicators = [
-
-"تعزز المدرسة القيم الإسلامية والهوية الوطنية",
-
-"يظهر المتعلمون الاعتزاز بالقيم والهوية الوطنية",
-
-"توفر المدرسة مناخًا آمنًا للتعلم والنمو النفسي والاجتماعي",
-
-"تنشر المدرسة قواعد السلوك والمواظبة وتتابع تطبيقها",
-
-"توفر المدرسة برامج وأنشطة تربوية داعمة للسلوك الإيجابي",
-
-"تظهر المدرسة مشاركة الأسرة في تعلم أبنائهم والتحضير لمستقبلهم",
-
-"يظهر المتعلمون التزامًا بالممارسات الصحية السليمة",
-
-"يلتزم المتعلمون بقواعد السلوك والانضباط المدرسي",
-
-"يظهر المتعلمون اعتزازًا بثقافتهم واحترامًا للتنوع الثقافي في المجتمع",
-
-"تنمي المدرسة المهارات العاطفية والاجتماعية لدى المتعلمين",
-
-"يظهر المتعلمون اتجاهات إيجابية نحو ذواتهم"
-
-];
-
-
-
-/* =====================================
-   التقارير الجاهزة
-===================================== */
-
-const reports = [
-
-
-`نفذت المدرسة عددًا من البرامج والأنشطة التي تهدف إلى تعزيز القيم الإسلامية والهوية الوطنية لدى الطلاب، من خلال البرامج التوعوية والأنشطة المدرسية والمناسبات الوطنية، بما يسهم في تعزيز الانتماء والاعتزاز بالقيم الوطنية والإسلامية.`,
-
-
-`حرصت المدرسة على تعزيز اعتزاز الطلاب بالقيم والهوية الوطنية من خلال الأنشطة والبرامج الهادفة والمشاركة في المناسبات الوطنية وتنمية الشعور بالانتماء والمسؤولية تجاه الوطن.`,
-
-
-`عملت المدرسة على توفير بيئة مدرسية آمنة ومحفزة للتعلم والنمو النفسي والاجتماعي، من خلال المتابعة المستمرة للطلاب والتوجيه والإرشاد ومعالجة المشكلات الطلابية بصورة تربوية.`,
-
-
-`قامت المدرسة بنشر قواعد السلوك والمواظبة وتعريف الطلاب وأولياء الأمور بها، مع متابعة تطبيقها بصورة مستمرة واتخاذ الإجراءات التربوية المناسبة لتعزيز الانضباط المدرسي.`,
-
-
-`نفذت المدرسة برامج وأنشطة تربوية لتعزيز السلوك الإيجابي لدى الطلاب، مثل برامج التحفيز والتكريم وتعزيز الانضباط والمسؤولية والاحترام.`,
-
-
-`تم تعزيز مشاركة الأسرة في العملية التعليمية من خلال التواصل المستمر مع أولياء الأمور وعقد الاجتماعات وإرسال الرسائل التوعوية ومتابعة المستوى الدراسي والسلوكي للطلاب.`,
-
-
-`نفذت المدرسة برامج توعوية لتعزيز الممارسات الصحية السليمة لدى الطلاب، ومنها التوعية بالنظافة الشخصية والتغذية السليمة والوقاية والمحافظة على الصحة العامة.`,
-
-
-`تتابع المدرسة التزام الطلاب بقواعد السلوك والانضباط المدرسي من خلال المتابعة اليومية للحضور والمواظبة وتنفيذ برامج التوجيه والإرشاد وتحفيز الطلاب المنضبطين.`,
-
-
-`نفذت المدرسة برامج تربوية لتعزيز اعتزاز الطلاب بثقافتهم واحترام التنوع الثقافي في المجتمع وتنمية قيم الاحترام والتسامح والتعايش الإيجابي.`,
-
-
-`عملت المدرسة على تنمية المهارات العاطفية والاجتماعية لدى الطلاب من خلال البرامج الإرشادية التي تتناول مهارات التواصل والثقة بالنفس وحل المشكلات وإدارة الانفعالات والعمل الجماعي.`,
-
-
-`قدمت المدرسة برامج إرشادية وتحفيزية تساعد الطلاب على تكوين اتجاهات إيجابية نحو ذواتهم وتعزيز الثقة بالنفس والطموح والتخطيط للمستقبل.`
-
-];
-
-
-
-/* =====================================
-   إنشاء المؤشرات
-===================================== */
-
-function createIndicators() {
-
-
-const container =
-document.getElementById(
-"indicatorsContainer"
-);
-
-
-indicators.forEach(
-(indicator,index) => {
-
-
-const savedReport =
-
-localStorage.getItem(
-"report_" + index
-)
-
-||
-
-reports[index];
-
-
-const card =
-document.createElement("div");
-
-
-card.className =
-"indicator";
-
-
-card.id =
-"indicator_" + index;
-
-
-card.innerHTML = `
-
-
-<div class="indicator-title">
-
-
-<div class="number">
-
-${index + 1}
-
-</div>
-
-
-<h3>
-
-${indicator}
-
-</h3>
-
-
-</div>
-
-
-<label class="report-label">
-
-📋 تقرير المؤشر
-
-</label>
-
-
-<textarea
-
-id="report_${index}"
-
-disabled
-
->${savedReport}</textarea>
-
-
-<div class="indicator-buttons">
-
-
-<button
-
-class="unlock-btn"
-
-onclick="unlockIndicator(${index})">
-
-🔓 فتح التعديل
-
-</button>
-
-
-<button
-
-class="save-btn"
-
-onclick="saveIndicator(${index})">
-
-💾 حفظ التقرير
-
-</button>
-
-
-<button
-
-class="lock-btn"
-
-onclick="lockIndicator(${index})">
-
-🔒 قفل
-
-</button>
-
-
-</div>
-
-
-<label class="image-label">
-
-📷 الصور والشواهد
-
-</label>
-
-
-<input
-
-type="file"
-
-id="file_${index}"
-
-accept="image/*"
-
-multiple
-
-disabled
-
-onchange="addImages(
-${index},
-this.files
-)">
-
-
-<div
-
-class="gallery"
-
-id="gallery_${index}">
-
-</div>
-
-
-<div
-
-class="status"
-
-id="status_${index}">
-
-🔒 التعديل مقفل
-
-</div>
-
-
-`;
-
-
-container.appendChild(card);
-
-
-displayImages(index);
-
-
-});
-
-
-}
-
-
-
-/* =====================================
-   فتح مؤشر بكلمة السر
-===================================== */
-
-function unlockIndicator(index) {
-
-
-const userPassword =
-
-prompt(
-"أدخل كلمة السر لفتح التعديل:"
-);
-
-
-if (
-userPassword !== password
-) {
-
-
-alert(
-"❌ كلمة السر غير صحيحة"
-);
-
-
-return;
-
-
-}
-
-
-document.getElementById(
-"report_" + index
-).disabled = false;
-
-
-document.getElementById(
-"file_" + index
-).disabled = false;
-
-
-document.getElementById(
-"indicator_" + index
-).classList.add(
-"unlocked"
-);
-
-
-document.getElementById(
-"status_" + index
-).innerHTML =
-
-"🔓 التعديل مفتوح";
-
-
-}
-
-
-
-/* =====================================
-   قفل المؤشر
-===================================== */
-
-function lockIndicator(index) {
-
-
-document.getElementById(
-"report_" + index
-).disabled = true;
-
-
-document.getElementById(
-"file_" + index
-).disabled = true;
-
-
-document.getElementById(
-"indicator_" + index
-).classList.remove(
-"unlocked"
-);
-
-
-document.getElementById(
-"status_" + index
-).innerHTML =
-
-"🔒 التعديل مقفل";
-
-
-}
-
-
-
-/* =====================================
-   حفظ التقرير
-===================================== */
-
-function saveIndicator(index) {
-
-
-const indicator =
-
-document.getElementById(
-"indicator_" + index
-);
-
-
-if (
-
-!indicator.classList.contains(
-"unlocked"
-)
-
-) {
-
-
-alert(
-"🔐 يجب فتح التعديل بكلمة السر أولاً"
-);
-
-
-return;
-
-
-}
-
-
-const report =
-
-document.getElementById(
-"report_" + index
-).value;
-
-
-localStorage.setItem(
-
-"report_" + index,
-
-report
-
-);
-
-
-alert(
-"✅ تم حفظ التقرير بنجاح"
-);
-
-
-}
-
-
-
-/* =====================================
-   إضافة الصور
-===================================== */
-
-function addImages(
-index,
-files
-) {
-
-
-const indicator =
-
-document.getElementById(
-"indicator_" + index
-);
-
-
-if (
-
-!indicator.classList.contains(
-"unlocked"
-)
-
-) {
-
-
-alert(
-"🔐 يجب فتح التعديل بكلمة السر أولاً"
-);
-
-
-return;
-
-
-}
-
-
-let images =
-
-JSON.parse(
-
-localStorage.getItem(
-"images_" + index
-)
-
-||
-
-"[]"
-
-);
-
-
-Array.from(files).forEach(
-file => {
-
-
-if (
-!file.type.startsWith("image/")
-) {
-
-return;
-
-}
-
-
-const reader =
-new FileReader();
-
-
-reader.onload =
-function(event) {
-
-
-images.push(
-event.target.result
-);
-
-
-try {
-
-
-localStorage.setItem(
-
-"images_" + index,
-
-JSON.stringify(images)
-
-);
-
-
-displayImages(index);
-
-
-}
-
-catch(error) {
-
-
-alert(
-"مساحة التخزين في المتصفح ممتلئة. حاول استخدام صور أقل أو أصغر حجمًا."
-);
-
-
-}
-
-
-};
-
-
-reader.readAsDataURL(file);
-
-
-});
-
-
-}
-
-
-
-/* =====================================
-   عرض الصور
-===================================== */
-
-function displayImages(index) {
-
-
-const gallery =
-
-document.getElementById(
-"gallery_" + index
-);
-
-
-if (!gallery) {
-
-return;
-
-}
-
-
-gallery.innerHTML = "";
-
-
-const images =
-
-JSON.parse(
-
-localStorage.getItem(
-"images_" + index
-)
-
-||
-
-"[]"
-
-);
-
-
-images.forEach(
-(image,imageIndex) => {
-
-
-const box =
-document.createElement("div");
-
-
-box.className =
-"image-box";
-
-
-box.innerHTML = `
-
-
-<img
-
-src="${image}"
-
-alt="صورة توثيق للمؤشر">
-
-
-<button
-
-class="remove-image"
-
-onclick="removeImage(
-${index},
-${imageIndex}
-)"
-
-title="حذف الصورة">
-
-×
-
-</button>
-
-
-`;
-
-
-gallery.appendChild(box);
-
-
-});
-
-
-}
-
-
-
-/* =====================================
-   حذف صورة
-===================================== */
-
-function removeImage(
-index,
-imageIndex
-) {
-
-
-const indicator =
-
-document.getElementById(
-"indicator_" + index
-);
-
-
-if (
-
-!indicator.classList.contains(
-"unlocked"
-)
-
-) {
-
-
-alert(
-"🔐 يجب فتح التعديل بكلمة السر أولاً"
-);
-
-
-return;
-
-
-}
-
-
-const confirmation =
-
-confirm(
-"هل تريد حذف هذه الصورة؟"
-);
-
-
-if (!confirmation) {
-
-return;
-
-}
-
-
-let images =
-
-JSON.parse(
-
-localStorage.getItem(
-"images_" + index
-)
-
-||
-
-"[]"
-
-);
-
-
-images.splice(
-imageIndex,
-1
-);
-
-
-localStorage.setItem(
-
-"images_" + index,
-
-JSON.stringify(images)
-
-);
-
-
-displayImages(index);
-
-
-}
-
-
-
-/* =====================================
-   فتح جميع المؤشرات
-===================================== */
-
-function unlockAll() {
-
-
-const userPassword =
-
-prompt(
-"أدخل كلمة السر لفتح جميع المؤشرات:"
-);
-
-
-if (
-userPassword !== password
-) {
-
-
-alert(
-"❌ كلمة السر غير صحيحة"
-);
-
-
-return;
-
-
-}
-
-
-indicators.forEach(
-(indicator,index) => {
-
-
-document.getElementById(
-"report_" + index
-).disabled = false;
-
-
-document.getElementById(
-"file_" + index
-).disabled = false;
-
-
-document.getElementById(
-"indicator_" + index
-).classList.add(
-"unlocked"
-);
-
-
-document.getElementById(
-"status_" + index
-).innerHTML =
-
-"🔓 التعديل مفتوح";
-
-
-});
-
-
-}
-
-
-
-/* =====================================
-   قفل جميع المؤشرات
-===================================== */
-
-function lockAll() {
-
-
-indicators.forEach(
-(indicator,index) => {
-
-
-lockIndicator(index);
-
-
-});
-
-
-}
-
-
-
-/* =====================================
-   تغيير الألوان بكلمة السر
-===================================== */
-
-function changeColorsWithPassword() {
-
-
-const userPassword =
-
-prompt(
-"أدخل كلمة السر لتغيير ألوان الواجهة:"
-);
-
-
-if (
-userPassword !== password
-) {
-
-
-alert(
-"❌ كلمة السر غير صحيحة"
-);
-
-
-return;
-
-
-}
-
-
-const mainColor =
-
-document.getElementById(
-"mainColor"
-).value;
-
-
-const backgroundColor =
-
-document.getElementById(
-"backgroundColor"
-).value;
-
-
-document.documentElement.style
-.setProperty(
-
-"--main-color",
-
-mainColor
-
-);
-
-
-document.documentElement.style
-.setProperty(
-
-"--background-color",
-
-backgroundColor
-
-);
-
-
-localStorage.setItem(
-
-"mainColor",
-
-mainColor
-
-);
-
-
-localStorage.setItem(
-
-"backgroundColor",
-
-backgroundColor
-
-);
-
-
-alert(
-"🎨 تم تغيير ألوان الواجهة بنجاح"
-);
-
-
-}
-
-
-
-/* =====================================
-   استعادة الألوان بكلمة السر
-===================================== */
-
-function resetColorsWithPassword() {
-
-
-const userPassword =
-
-prompt(
-"أدخل كلمة السر لاستعادة الألوان الافتراضية:"
-);
-
-
-if (
-userPassword !== password
-) {
-
-
-alert(
-"❌ كلمة السر غير صحيحة"
-);
-
-
-return;
-
-
-}
-
-
-const mainColor =
-"#6f58a8";
-
-
-const backgroundColor =
-"#f5f3fa";
-
-
-document.getElementById(
-"mainColor"
-).value =
-mainColor;
-
-
-document.getElementById(
-"backgroundColor"
-).value =
-backgroundColor;
-
-
-document.documentElement.style
-.setProperty(
-
-"--main-color",
-
-mainColor
-
-);
-
-
-document.documentElement.style
-.setProperty(
-
-"--background-color",
-
-backgroundColor
-
-);
-
-
-localStorage.removeItem(
-"mainColor"
-);
-
-
-localStorage.removeItem(
-"backgroundColor"
-);
-
-
-alert(
-"↩️ تمت استعادة الألوان الافتراضية"
-);
-
-
-}
-
-
-
-/* =====================================
-   تحميل الألوان المحفوظة
-===================================== */
-
-function loadSavedColors() {
-
-
-const savedMain =
-
-localStorage.getItem(
-"mainColor"
-);
-
-
-const savedBackground =
-
-localStorage.getItem(
-"backgroundColor"
-);
-
-
-if (savedMain) {
-
-
-document.getElementById(
-"mainColor"
-).value =
-savedMain;
-
-
-document.documentElement.style
-.setProperty(
-
-"--main-color",
-
-savedMain
-
-);
-
-
-}
-
-
-if (savedBackground) {
-
-
-document.getElementById(
-"backgroundColor"
-).value =
-savedBackground;
-
-
-document.documentElement.style
-.setProperty(
-
-"--background-color",
-
-savedBackground
-
-);
-
-
-}
-
-
-}
-
-
-
-/* =====================================
-   تشغيل النظام
-===================================== */
-
-createIndicators();
-
-loadSavedColors();
-
-
+  const password = "html1234";
+
+  const indicators = [
+    {
+      title: "تعزز المدرسة القيم الإسلامية والهوية الوطنية",
+      report: "نفذت المدرسة عددًا من البرامج والأنشطة التي تهدف إلى تعزيز القيم الإسلامية والهوية الوطنية لدى الطلاب، من خلال البرامج التوعوية والأنشطة المدرسية والمناسبات الوطنية، بما يسهم في تعزيز الانتماء والاعتزاز بالقيم الوطنية والإسلامية."
+    },
+    {
+      title: "يظهر المتعلمون الاعتزاز بالقيم والهوية الوطنية",
+      report: "حرصت المدرسة على تعزيز اعتزاز الطلاب بالقيم والهوية الوطنية من خلال الأنشطة والبرامج الهادفة والمشاركة في المناسبات الوطنية وتنمية الشعور بالانتماء والمسؤولية تجاه الوطن."
+    },
+    {
+      title: "توفر المدرسة مناخًا آمنًا للتعلم والنمو النفسي والاجتماعي",
+      report: "عملت المدرسة على توفير بيئة مدرسية آمنة ومحفزة للتعلم والنمو النفسي والاجتماعي، من خلال المتابعة المستمرة للطلاب والتوجيه والإرشاد ومعالجة المشكلات الطلابية بصورة تربوية."
+    },
+    {
+      title: "تنشر المدرسة قواعد السلوك والمواظبة وتتابع تطبيقها",
+      report: "قامت المدرسة بنشر قواعد السلوك والمواظبة وتعريف الطلاب وأولياء الأمور بها، مع متابعة تطبيقها بصورة مستمرة واتخاذ الإجراءات التربوية المناسبة لتعزيز الانضباط المدرسي."
+    },
+    {
+      title: "توفر المدرسة برامج وأنشطة تربوية داعمة للسلوك الإيجابي",
+      report: "نفذت المدرسة برامج وأنشطة تربوية لتعزيز السلوك الإيجابي لدى الطلاب، مثل برامج التحفيز والتكريم وتعزيز الانضباط والمسؤولية والاحترام."
+    },
+    {
+      title: "تظهر المدرسة مشاركة الأسرة في تعلم أبنائهم والتحضير لمستقبلهم",
+      report: "تم تعزيز مشاركة الأسرة في العملية التعليمية من خلال التواصل المستمر مع أولياء الأمور وعقد الاجتماعات وإرسال الرسائل التوعوية ومتابعة المستوى الدراسي والسلوكي للطلاب."
+    },
+    {
+      title: "يظهر المتعلمون التزامًا بالممارسات الصحية السليمة",
+      report: "نفذت المدرسة برامج توعوية لتعزيز الممارسات الصحية السليمة لدى الطلاب، ومنها التوعية بالنظافة الشخصية والتغذية السليمة والوقاية والمحافظة على الصحة العامة."
+    },
+    {
+      title: "يلتزم المتعلمون بقواعد السلوك والانضباط المدرسي",
+      report: "تتابع المدرسة التزام الطلاب بقواعد السلوك والانضباط المدرسي من خلال المتابعة اليومية للحضور والمواظبة وتنفيذ برامج التوجيه والإرشاد وتحفيز الطلاب المنضبطين."
+    },
+    {
+      title: "يظهر المتعلمون اعتزازًا بثقافتهم واحترامًا للتنوع الثقافي في المجتمع",
+      report: "نفذت المدرسة برامج تربوية لتعزيز اعتزاز الطلاب بثقافتهم واحترام التنوع الثقافي في المجتمع وتنمية قيم الاحترام والتسامح والتعايش الإيجابي."
+    },
+    {
+      title: "تنمي المدرسة المهارات العاطفية والاجتماعية لدى المتعلمين",
+      report: "عملت المدرسة على تنمية المهارات العاطفية والاجتماعية لدى الطلاب من خلال البرامج الإرشادية التي تتناول مهارات التواصل والثقة بالنفس وحل المشكلات وإدارة الانفعالات والعمل الجماعي."
+    },
+    {
+      title: "يظهر المتعلمون اتجاهات إيجابية نحو ذواتهم",
+      report: "قدمت المدرسة برامج إرشادية وتحفيزية تساعد الطلاب على تكوين اتجاهات إيجابية نحو ذواتهم وتعزيز الثقة بالنفس والطموح والتخطيط للمستقبل."
+    }
+  ];
+
+  function createIndicators() {
+    const container = document.getElementById("indicatorsContainer");
+    container.innerHTML = "";
+
+    indicators.forEach((item, index) => {
+      const savedReport =
+        localStorage.getItem("report_" + index) || item.report;
+
+      const card = document.createElement("div");
+      card.className = "indicator-card";
+      card.id = "indicator-" + index;
+
+      card.innerHTML = `
+        <div class="indicator-title">
+          المؤشر ${index + 1}: ${item.title}
+        </div>
+
+        <textarea
+          id="report-${index}"
+          disabled
+          oninput="saveReport(${index})"
+        >${savedReport}</textarea>
+
+        <div class="controls">
+          <button
+            class="primary-btn"
+            onclick="unlockIndicator(${index})"
+          >
+            🔓 فتح التعديل
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="lockIndicator(${index})"
+          >
+            🔒 قفل
+          </button>
+
+          <button
+            class="print-btn"
+            onclick="printIndicator(${index})"
+          >
+            🖨️ طباعة هذا المؤشر
+          </button>
+        </div>
+
+        <div class="locked-note">
+          يلزم إدخال كلمة المرور لتمكين التعديل وإضافة الصور.
+        </div>
+
+        <input
+          type="file"
+          id="file-${index}"
+          accept="image/*"
+          multiple
+          disabled
+          onchange="addImages(${index}, this.files)"
+        >
+
+        <div
+          class="gallery"
+          id="gallery-${index}"
+        ></div>
+      `;
+
+      container.appendChild(card);
+
+      displayImages(index);
+    });
+  }
+
+  function checkPassword() {
+    const entered = prompt("أدخل كلمة المرور:");
+    return entered === password;
+  }
+
+  function unlockIndicator(index) {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    document.getElementById("report-" + index).disabled = false;
+    document.getElementById("file-" + index).disabled = false;
+  }
+
+  function lockIndicator(index) {
+    document.getElementById("report-" + index).disabled = true;
+    document.getElementById("file-" + index).disabled = true;
+  }
+
+  function unlockAll() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    indicators.forEach((_, index) => {
+      document.getElementById("report-" + index).disabled = false;
+      document.getElementById("file-" + index).disabled = false;
+    });
+  }
+
+  function lockAll() {
+    indicators.forEach((_, index) => {
+      lockIndicator(index);
+    });
+  }
+
+  function saveReport(index) {
+    const report =
+      document.getElementById("report-" + index).value;
+
+    localStorage.setItem(
+      "report_" + index,
+      report
+    );
+  }
+
+  function addImages(index, files) {
+    if (!files || files.length === 0) return;
+
+    let images =
+      JSON.parse(
+        localStorage.getItem("images_" + index) || "[]"
+      );
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        images.push(event.target.result);
+
+        try {
+          localStorage.setItem(
+            "images_" + index,
+            JSON.stringify(images)
+          );
+
+          displayImages(index);
+        } catch (error) {
+          alert(
+            "تعذر حفظ الصورة. قد تكون مساحة التخزين في المتصفح ممتلئة."
+          );
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("file-" + index).value = "";
+  }
+
+  function displayImages(index) {
+    const gallery =
+      document.getElementById("gallery-" + index);
+
+    if (!gallery) return;
+
+    gallery.innerHTML = "";
+
+    const images =
+      JSON.parse(
+        localStorage.getItem("images_" + index) || "[]"
+      );
+
+    images.forEach((image, imageIndex) => {
+      const box = document.createElement("div");
+      box.className = "image-box";
+
+      box.innerHTML = `
+        <img src="${image}" alt="شاهد المؤشر">
+
+        <button
+          class="delete-btn"
+          onclick="deleteImage(${index}, ${imageIndex})"
+        >
+          حذف الصورة
+        </button>
+      `;
+
+      gallery.appendChild(box);
+    });
+  }
+
+  function deleteImage(index, imageIndex) {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    let images =
+      JSON.parse(
+        localStorage.getItem("images_" + index) || "[]"
+      );
+
+    images.splice(imageIndex, 1);
+
+    localStorage.setItem(
+      "images_" + index,
+      JSON.stringify(images)
+    );
+
+    displayImages(index);
+  }
+
+  function applyColors() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    const mainColor =
+      document.getElementById("mainColor").value;
+
+    const backgroundColor =
+      document.getElementById("backgroundColor").value;
+
+    document.documentElement.style.setProperty(
+      "--main-color",
+      mainColor
+    );
+
+    document.documentElement.style.setProperty(
+      "--background-color",
+      backgroundColor
+    );
+
+    localStorage.setItem(
+      "mainColor",
+      mainColor
+    );
+
+    localStorage.setItem(
+      "backgroundColor",
+      backgroundColor
+    );
+  }
+
+  function resetColors() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    localStorage.removeItem("mainColor");
+    localStorage.removeItem("backgroundColor");
+
+    document.documentElement.style.setProperty(
+      "--main-color",
+      "#1f6f5f"
+    );
+
+    document.documentElement.style.setProperty(
+      "--background-color",
+      "#f5f7f8"
+    );
+
+    document.getElementById("mainColor").value =
+      "#1f6f5f";
+
+    document.getElementById("backgroundColor").value =
+      "#f5f7f8";
+  }
+
+  function loadColors() {
+    const mainColor =
+      localStorage.getItem("mainColor");
+
+    const backgroundColor =
+      localStorage.getItem("backgroundColor");
+
+    if (mainColor) {
+      document.documentElement.style.setProperty(
+        "--main-color",
+        mainColor
+      );
+
+      document.getElementById("mainColor").value =
+        mainColor;
+    }
+
+    if (backgroundColor) {
+      document.documentElement.style.setProperty(
+        "--background-color",
+        backgroundColor
+      );
+
+      document.getElementById(
+        "backgroundColor"
+      ).value = backgroundColor;
+    }
+  }
+
+  function printIndicator(index) {
+    const item = indicators[index];
+    const report =
+      document.getElementById("report-" + index).value;
+
+    const images =
+      JSON.parse(
+        localStorage.getItem("images_" + index) || "[]"
+      );
+
+    const imagesHTML = images.map(image => `
+      <div class="print-image">
+        <img src="${image}">
+      </div>
+    `).join("");
+
+    const printWindow =
+      window.open("", "_blank");
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+
+      <html lang="ar" dir="rtl">
+
+      <head>
+
+        <meta charset="UTF-8">
+
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1"
+        >
+
+        <title>
+          تقرير المؤشر ${index + 1}
+        </title>
+
+        <style>
+
+          body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 35px;
+            color: #222;
+            background: white;
+          }
+
+          .school-header {
+            text-align: center;
+            border-bottom: 3px solid #1f6f5f;
+            padding-bottom: 18px;
+            margin-bottom: 28px;
+          }
+
+          .school-header h1 {
+            margin: 0;
+            font-size: 26px;
+          }
+
+          .school-header p {
+            margin: 8px 0 0;
+            font-size: 17px;
+          }
+
+          .indicator-number {
+            color: #1f6f5f;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+
+          .indicator-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 25px;
+          }
+
+          .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0 10px;
+            color: #1f6f5f;
+          }
+
+          .report-box {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 18px;
+            font-size: 17px;
+            line-height: 2;
+            white-space: pre-wrap;
+          }
+
+          .images-container {
+            margin-top: 20px;
+          }
+
+          .print-image {
+            margin-bottom: 18px;
+            text-align: center;
+            page-break-inside: avoid;
+          }
+
+          .print-image img {
+            max-width: 100%;
+            max-height: 650px;
+            object-fit: contain;
+            border-radius: 8px;
+          }
+
+          .footer {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+          }
+
+          @media print {
+            body {
+              padding: 15px;
+            }
+          }
+
+        </style>
+
+      </head>
+
+      <body>
+
+        <div class="school-header">
+
+          <h1>
+            تقرير مؤشرات التوجيه الطلابي
+          </h1>
+
+          <p>
+            ثانوية مجمع الأمير فهد بن سلطان
+          </p>
+
+        </div>
+
+        <div class="indicator-number">
+          المؤشر رقم ${index + 1}
+        </div>
+
+        <div class="indicator-title">
+          ${item.title}
+        </div>
+
+        <div class="section-title">
+          التقرير
+        </div>
+
+        <div class="report-box">
+          ${report}
+        </div>
+
+        ${
+          images.length > 0
+          ?
+          `
+            <div class="section-title">
+              الشواهد والصور
+            </div>
+
+            <div class="images-container">
+              ${imagesHTML}
+            </div>
+          `
+          :
+          `
+            <div class="section-title">
+              الشواهد والصور
+            </div>
+
+            <p>
+              لا توجد صور مرفقة لهذا المؤشر.
+            </p>
+          `
+        }
+
+        <div class="footer">
+          نظام توثيق مؤشرات التوجيه الطلابي
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        <\/script>
+
+      </body>
+
+      </html>
+    `);
+
+    printWindow.document.close();
+  }
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+      createIndicators();
+      loadColors();
+    }
+  );
 </script>
 
-
 </body>
-
 </html>
