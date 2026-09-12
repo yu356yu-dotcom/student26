@@ -344,13 +344,13 @@
         </div>
 
         <input
-          type="file"
-          id="file-${index}"
-          accept="image/*"
-          multiple
-          disabled
-          onchange="addImages(${index}, this.files)"
-        >
+  type="file"
+  id="file-${index}"
+  accept="image/*,.pdf,.doc,.docx"
+  multiple
+  disabled
+  onchange="addImages(${index}, this.files)"
+>
 
         <div
           class="gallery"
@@ -412,72 +412,139 @@
     );
   }
 
-  function addImages(index, files) {
-    if (!files || files.length === 0) return;
+function addImages(index, files) {
+  if (!files || files.length === 0) return;
 
-    let images =
-      JSON.parse(
-        localStorage.getItem("images_" + index) || "[]"
-      );
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ];
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
+  const attachments = JSON.parse(
+    localStorage.getItem("images_" + index) || "[]"
+  );
 
-      reader.onload = function(event) {
-        images.push(event.target.result);
+  Array.from(files).forEach(file => {
+    const allowed =
+      file.type.startsWith("image/") ||
+      allowedTypes.includes(file.type);
 
-        try {
-          localStorage.setItem(
-            "images_" + index,
-            JSON.stringify(images)
-          );
+    if (!allowed) {
+      alert("الملف غير مدعوم: " + file.name);
+      return;
+    }
 
-          displayImages(index);
-        } catch (error) {
-          alert(
-            "تعذر حفظ الصورة. قد تكون مساحة التخزين في المتصفح ممتلئة."
-          );
-        }
-      };
+    const reader = new FileReader();
 
-      reader.readAsDataURL(file);
-    });
+    reader.onload = function(event) {
+      attachments.push({
+        name: file.name,
+        type: file.type,
+        data: event.target.result
+      });
 
-    document.getElementById("file-" + index).value = "";
-  }
+      try {
+        localStorage.setItem(
+          "images_" + index,
+          JSON.stringify(attachments)
+        );
+
+        displayImages(index);
+      } catch (error) {
+        alert("تعذر حفظ الملف. قد يكون حجم الملف كبيرًا جدًا.");
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+        
 
   function displayImages(index) {
-    const gallery =
-      document.getElementById("gallery-" + index);
+  const gallery = document.getElementById("gallery-" + index);
 
-    if (!gallery) return;
+  if (!gallery) return;
 
-    gallery.innerHTML = "";
+  gallery.innerHTML = "";
 
-    const images =
-      JSON.parse(
-        localStorage.getItem("images_" + index) || "[]"
-      );
+  const attachments = JSON.parse(
+    localStorage.getItem("images_" + index) || "[]"
+  );
 
-    images.forEach((image, imageIndex) => {
-      const box = document.createElement("div");
-      box.className = "image-box";
+  attachments.forEach((item, fileIndex) => {
 
-      box.innerHTML = `
-        <img src="${image}" alt="شاهد المؤشر">
+    const attachment =
+      typeof item === "string"
+        ? {
+            name: "صورة " + (fileIndex + 1),
+            type: "image/jpeg",
+            data: item
+          }
+        : item;
 
-        <button
-          class="delete-btn"
-          onclick="deleteImage(${index}, ${imageIndex})"
-        >
-          حذف الصورة
-        </button>
-      `;
+    const box = document.createElement("div");
+    box.className = "image-box";
 
-      gallery.appendChild(box);
-    });
-  }
+    if (
+      attachment.type &&
+      attachment.type.startsWith("image/")
+    ) {
+      const img = document.createElement("img");
 
+      img.src = attachment.data;
+      img.alt = attachment.name;
+
+      box.appendChild(img);
+
+    } else {
+
+      const fileBox = document.createElement("div");
+
+      fileBox.style.padding = "15px";
+      fileBox.style.textAlign = "center";
+      fileBox.style.border = "1px solid #ddd";
+      fileBox.style.borderRadius = "8px";
+
+      const icon = document.createElement("div");
+      icon.style.fontSize = "35px";
+
+      icon.textContent =
+        attachment.type === "application/pdf"
+          ? "📕"
+          : "📄";
+
+      const name = document.createElement("div");
+      name.textContent = attachment.name;
+      name.style.margin = "8px";
+
+      const link = document.createElement("a");
+      link.href = attachment.data;
+      link.download = attachment.name;
+      link.target = "_blank";
+      link.textContent = "فتح / تنزيل الملف";
+
+      fileBox.appendChild(icon);
+      fileBox.appendChild(name);
+      fileBox.appendChild(link);
+
+      box.appendChild(fileBox);
+    }
+
+    const deleteBtn = document.createElement("button");
+
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "حذف المرفق";
+
+    deleteBtn.onclick = function() {
+      deleteImage(index, fileIndex);
+    };
+
+    box.appendChild(deleteBtn);
+    gallery.appendChild(box);
+  });
+}
   function deleteImage(index, imageIndex) {
     if (!checkPassword()) {
       alert("كلمة المرور غير صحيحة");
