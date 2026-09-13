@@ -203,6 +203,17 @@
       }
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://mitzbajoxtaegpgsqvai.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_C7XOHoTAaVXfp9penx5jSQ_6FLdFHrO";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+</script>
 </head>
 
 <body>
@@ -355,7 +366,23 @@
         <div
           class="gallery"
           id="gallery-${index}"
-        ></div>
+        ></div><div class="data-source-controls">
+
+  <button
+    class="secondary-btn"
+    onclick="connectDataSource(${index})"
+  >
+    🔗 ربط مصدر بيانات
+  </button>
+
+  <button
+    class="primary-btn"
+    onclick="analyzeIndicator(${index})"
+  >
+    ✨ تحليل الآن
+  </button>
+
+</div>
       `;
 
       container.appendChild(card);
@@ -363,7 +390,19 @@
       displayImages(index);
     });
   }
+function connectDataSource(index) {
+  alert(
+    "سيتم ربط المصدر للمؤشر رقم " + (index + 1) +
+    "\n\nالخيارات القادمة:\nExcel\nGoogle Drive\nGoogle Sheets\nPDF\nWord"
+  );
+}
 
+function analyzeIndicator(index) {
+  alert(
+    "سيتم تحليل بيانات المؤشر رقم " + (index + 1) +
+    " تلقائياً بعد ربط مصدر البيانات."
+  );
+}
   function checkPassword() {
     const entered = prompt("أدخل كلمة المرور:");
     return entered === password;
