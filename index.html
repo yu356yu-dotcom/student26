@@ -391,12 +391,30 @@
     });
   }
 function connectDataSource(index) {
-  alert(
-    "سيتم ربط المصدر للمؤشر رقم " + (index + 1) +
-    "\n\nالخيارات القادمة:\nExcel\nGoogle Drive\nGoogle Sheets\nPDF\nWord"
-  );
+  const input = document.createElement("input");
+
+  input.type = "file";
+  input.accept = ".xlsx,.xls,.csv";
+
+  input.onchange = function () {
+    const file = input.files[0];
+
+    if (!file) return;
+
+    handleExcelFile(index, file);
+  };
+
+  input.click();
 }
 
+function handleExcelFile(index, file) {
+  alert(
+    "تم اختيار ملف Excel للمؤشر رقم " +
+    (index + 1) +
+    "\n\nاسم الملف: " +
+    file.name
+  );
+}
 function analyzeIndicator(index) {
   alert(
     "سيتم تحليل بيانات المؤشر رقم " + (index + 1) +
