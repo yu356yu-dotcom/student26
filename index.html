@@ -408,12 +408,58 @@ function connectDataSource(index) {
 }
 
 function handleExcelFile(index, file) {
-  alert(
-    "تم اختيار ملف Excel للمؤشر رقم " +
-    (index + 1) +
-    "\n\nاسم الملف: " +
-    file.name
-  );
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+
+      const workbook = XLSX.read(data, {
+        type: "array"
+      });
+
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      const rows = XLSX.utils.sheet_to_json(
+        worksheet,
+        {
+          header: 1,
+          defval: ""
+        }
+      );
+
+      const headers = rows.length > 0 ? rows[0] : [];
+      const dataRows = rows.slice(1);
+
+      window.excelData = window.excelData || {};
+      window.excelData[index] = {
+        fileName: file.name,
+        sheetName: firstSheetName,
+        headers: headers,
+        rows: dataRows
+      };
+
+      alert(
+        "تمت قراءة ملف Excel بنجاح ✅" +
+        "\n\nالمؤشر رقم: " + (index + 1) +
+        "\nاسم الملف: " + file.name +
+        "\nاسم الورقة: " + firstSheetName +
+        "\nعدد الأعمدة: " + headers.length +
+        "\nعدد الصفوف: " + dataRows.length
+      );
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "تعذر قراءة ملف Excel.\n" +
+        "تأكد أن الملف بصيغة xlsx أو xls أو csv."
+      );
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
 }
 function analyzeIndicator(index) {
   alert(
