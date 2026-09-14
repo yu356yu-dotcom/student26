@@ -213,10 +213,55 @@
 const SUPABASE_URL = "https://mitzbajoxtaegpgsqvai.supabase.co";
 const SUPABASE_KEY = "sb_publishable_C7XOHoTAaVXfp9penx5jSQ_6FLdFHrO";
 
+
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
+
+async function loginWithSupabase() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  if (!email || !password) {
+    alert("أدخل البريد الإلكتروني وكلمة المرور");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    alert("تعذر تسجيل الدخول: " + error.message);
+    return;
+  }
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("mainSite").style.display = "block";
+
+  alert("تم تسجيل الدخول بنجاح ✅");
+}
+
+async function logoutSupabase() {
+  await supabaseClient.auth.signOut();
+  location.reload();
+}
+
+async function checkSupabaseSession() {
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data.session) {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("mainSite").style.display = "block";
+  }
+}
+
+window.addEventListener("load", checkSupabaseSession);
+
+
+   
 </script>
 
 
@@ -225,7 +270,30 @@ const supabaseClient = supabase.createClient(
 
 
 <body>
+<!-- تسجيل الدخول -->
+<div id="loginBox" style="max-width:420px;margin:40px auto;padding:25px;border:1px solid #ddd;border-radius:15px;text-align:center;">
+  <h2>تسجيل الدخول</h2>
 
+  <input
+    id="loginEmail"
+    type="email"
+    placeholder="البريد الإلكتروني"
+    style="width:90%;padding:12px;margin:8px;"
+  >
+
+  <input
+    id="loginPassword"
+    type="password"
+    placeholder="كلمة المرور"
+    style="width:90%;padding:12px;margin:8px;"
+  >
+
+  <button onclick="loginWithSupabase()" style="padding:12px 25px;">
+    دخول
+  </button>
+</div>
+
+<div id="mainSite" style="display:none;">
 <header>
   <h1>مؤشرات التوجيه الطلابي</h1>
   <p>نظام توثيق التقارير والشواهد والصور</p>
@@ -523,7 +591,7 @@ function analyzeIndicator(index) {
     );
   }
 
-function addImages(index, files) {
+async function addImages(index, files) {
   if (!files || files.length === 0) return;
 
   const allowedTypes = [
@@ -532,87 +600,135 @@ function addImages(index, files) {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ];
 
-  const attachments = JSON.parse(
-    localStorage.getItem("images_" + index) || "[]"
-  );
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const session = sessionData.session;
 
-  Array.from(files).forEach(file => {
+  if (!session) {
+    alert("يجب تسجيل الدخول أولاً");
+    return;
+  }
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    alert("تعذر تحديد المدرسة المرتبطة بالحساب");
+    return;
+  }
+
+  const schoolId = membership.school_id;
+
+  for (const file of Array.from(files)) {
     const allowed =
       file.type.startsWith("image/") ||
       allowedTypes.includes(file.type);
 
     if (!allowed) {
       alert("الملف غير مدعوم: " + file.name);
-      return;
+      continue;
     }
 
-    const reader = new FileReader();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath =
+      schoolId + "/" +
+      index + "/" +
+      Date.now() + "_" +
+      safeName;
 
-    reader.onload = function(event) {
-      attachments.push({
-        name: file.name,
-        type: file.type,
-        data: event.target.result
+    const { error: uploadError } = await supabaseClient.storage
+      .from("indicator-files")
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false
       });
 
-      try {
-        localStorage.setItem(
-          "images_" + index,
-          JSON.stringify(attachments)
-        );
+    if (uploadError) {
+      alert("تعذر رفع الملف: " + uploadError.message);
+      continue;
+    }
 
-        displayImages(index);
-      } catch (error) {
-        alert("تعذر حفظ الملف. قد يكون حجم الملف كبيرًا جدًا.");
-      }
-    };
+    const { error: dbError } = await supabaseClient
+      .from("indicator_attachments")
+      .insert({
+        indicator_index: index,
+        file_name: file.name,
+        file_path: filePath,
+        mime_type: file.type,
+        file_size: file.size,
+        created_by: session.user.id,
+        school_id: schoolId
+      });
 
-    reader.readAsDataURL(file);
-  });
+    if (dbError) {
+      await supabaseClient.storage
+        .from("indicator-files")
+        .remove([filePath]);
+
+      alert("تعذر حفظ بيانات الملف: " + dbError.message);
+      continue;
+    }
+  }
+
+  document.getElementById("file-" + index).value = "";
+
+  await displayImages(index);
+
+  alert("تم رفع الملفات بنجاح ✅");
 }
-
+  
         
 
-  function displayImages(index) {
+ async function displayImages(index) {
   const gallery = document.getElementById("gallery-" + index);
-
   if (!gallery) return;
+
+  gallery.innerHTML = "جاري تحميل الملفات...";
+
+  const { data: attachments, error } = await supabaseClient
+    .from("indicator_attachments")
+    .select("*")
+    .eq("indicator_index", index)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    gallery.innerHTML = "تعذر تحميل الملفات";
+    console.error(error);
+    return;
+  }
 
   gallery.innerHTML = "";
 
-  const attachments = JSON.parse(
-    localStorage.getItem("images_" + index) || "[]"
-  );
+  if (!attachments || attachments.length === 0) {
+    return;
+  }
 
-  attachments.forEach((item, fileIndex) => {
+  for (const attachment of attachments) {
+    const { data: signedData, error: urlError } =
+      await supabaseClient.storage
+        .from("indicator-files")
+        .createSignedUrl(attachment.file_path, 3600);
 
-    const attachment =
-      typeof item === "string"
-        ? {
-            name: "صورة " + (fileIndex + 1),
-            type: "image/jpeg",
-            data: item
-          }
-        : item;
+    if (urlError || !signedData) {
+      console.error(urlError);
+      continue;
+    }
 
     const box = document.createElement("div");
     box.className = "image-box";
 
     if (
-      attachment.type &&
-      attachment.type.startsWith("image/")
+      attachment.mime_type &&
+      attachment.mime_type.startsWith("image/")
     ) {
       const img = document.createElement("img");
-
-      img.src = attachment.data;
-      img.alt = attachment.name;
-
+      img.src = signedData.signedUrl;
+      img.alt = attachment.file_name;
       box.appendChild(img);
-
     } else {
-
       const fileBox = document.createElement("div");
-
       fileBox.style.padding = "15px";
       fileBox.style.textAlign = "center";
       fileBox.style.border = "1px solid #ddd";
@@ -620,21 +736,16 @@ function addImages(index, files) {
 
       const icon = document.createElement("div");
       icon.style.fontSize = "35px";
-
       icon.textContent =
-        attachment.type === "application/pdf"
-          ? "📕"
-          : "📄";
+        attachment.mime_type === "application/pdf" ? "📕" : "📄";
 
       const name = document.createElement("div");
-      name.textContent = attachment.name;
-      name.style.margin = "8px";
+      name.textContent = attachment.file_name;
 
       const link = document.createElement("a");
-      link.href = attachment.data;
-      link.download = attachment.name;
+      link.href = signedData.signedUrl;
       link.target = "_blank";
-      link.textContent = "فتح / تنزيل الملف";
+      link.textContent = "فتح الملف";
 
       fileBox.appendChild(icon);
       fileBox.appendChild(name);
@@ -642,41 +753,56 @@ function addImages(index, files) {
 
       box.appendChild(fileBox);
     }
+const deleteBtn = document.createElement("button");
+deleteBtn.textContent = "حذف";
+deleteBtn.className = "delete-btn";
 
-    const deleteBtn = document.createElement("button");
+deleteBtn.onclick = function () {
+  deleteImage(
+    index,
+    attachment.id,
+    attachment.file_path
+  );
+};
 
-    deleteBtn.className = "delete-btn";
-    deleteBtn.textContent = "حذف المرفق";
-
-    deleteBtn.onclick = function() {
-      deleteImage(index, fileIndex);
-    };
-
-    box.appendChild(deleteBtn);
+box.appendChild(deleteBtn);
     gallery.appendChild(box);
-  });
+  }
 }
-  function deleteImage(index, imageIndex) {
-    if (!checkPassword()) {
-      alert("كلمة المرور غير صحيحة");
-      return;
-    }
+   async function deleteImage(index, attachmentId, filePath) {
+  const ok = confirm("هل تريد حذف هذا الملف؟");
+  if (!ok) return;
 
-    let images =
-      JSON.parse(
-        localStorage.getItem("images_" + index) || "[]"
-      );
+  const { data: sessionData } = await supabaseClient.auth.getSession();
 
-    images.splice(imageIndex, 1);
-
-    localStorage.setItem(
-      "images_" + index,
-      JSON.stringify(images)
-    );
-
-    displayImages(index);
+  if (!sessionData.session) {
+    alert("يجب تسجيل الدخول أولاً");
+    return;
   }
 
+  const { error: storageError } = await supabaseClient.storage
+    .from("indicator-files")
+    .remove([filePath]);
+
+  if (storageError) {
+    alert("تعذر حذف الملف من التخزين: " + storageError.message);
+    return;
+  }
+
+  const { error: dbError } = await supabaseClient
+    .from("indicator_attachments")
+    .delete()
+    .eq("id", attachmentId);
+
+  if (dbError) {
+    alert("تم حذف الملف ولكن تعذر حذف بياناته: " + dbError.message);
+    return;
+  }
+
+  await displayImages(index);
+
+  alert("تم حذف الملف بنجاح ✅");
+}
   function applyColors() {
     if (!checkPassword()) {
       alert("كلمة المرور غير صحيحة");
@@ -976,6 +1102,6 @@ function addImages(index, files) {
     }
   );
 </script>
-
+</div>
 </body>
 </html>
