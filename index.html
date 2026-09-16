@@ -385,6 +385,7 @@ window.addEventListener("load", checkSupabaseSession);
     container.innerHTML = "";
 
     indicators.forEach((item, index) => {
+     item.indicatorId = index + 1;
       const savedReport =
         localStorage.getItem("report_" + index) || item.report;
 
