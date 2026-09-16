@@ -982,10 +982,14 @@ if (excelFiles.length > 0) {
   files = otherFiles;
 }
   const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ];
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv"
+];
+
 
   const { data: sessionData } = await supabaseClient.auth.getSession();
   const session = sessionData.session;
