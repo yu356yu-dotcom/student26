@@ -278,7 +278,8 @@ async function loadSavedAnalyses() {
   const { data: analyses, error } = await supabaseClient
     .from("indicator_analyses")
     .select("*")
-    .eq("school_id", membership.school_id);
+    .eq("school_id", membership.school_id)
+.order("updated_at", { ascending: false });
 
   if (error) {
     console.error("خطأ في استرجاع التحليلات:", error);
@@ -286,10 +287,14 @@ async function loadSavedAnalyses() {
   }
 
   window.savedAnalyses = analyses || [];
- window.savedAnalyses.forEach(saved => {
+const loadedIndicators = new Set();
+
+window.savedAnalyses.forEach(saved => {
   const index = Number(saved.indicator_index);
 
   if (!saved.analysis_html) return;
+  if (loadedIndicators.has(index)) return;
+  loadedIndicators.add(index);
 
   const reportElement =
     document.getElementById("analysis-content-" + index);
@@ -298,7 +303,7 @@ async function loadSavedAnalyses() {
     reportElement.innerHTML = saved.analysis_html;
     reportElement.style.display = "block";
   }
-}); 
+});
   console.log("تم استرجاع التحليلات من Supabase:", window.savedAnalyses);
 }
 window.addEventListener("load", checkSupabaseSession);
