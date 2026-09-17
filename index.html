@@ -286,6 +286,19 @@ async function loadSavedAnalyses() {
   }
 
   window.savedAnalyses = analyses || [];
+ window.savedAnalyses.forEach(saved => {
+  const index = Number(saved.indicator_index);
+
+  if (!saved.analysis_html) return;
+
+  const reportElement =
+    document.getElementById("analysis-report-" + index);
+
+  if (reportElement) {
+    reportElement.innerHTML = saved.analysis_html;
+    reportElement.style.display = "block";
+  }
+}); 
   console.log("تم استرجاع التحليلات من Supabase:", window.savedAnalyses);
 }
 window.addEventListener("load", checkSupabaseSession);
