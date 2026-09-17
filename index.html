@@ -292,7 +292,7 @@ async function loadSavedAnalyses() {
   if (!saved.analysis_html) return;
 
   const reportElement =
-    document.getElementById("analysis-report-" + index);
+    document.getElementById("analysis-content-" + index);
 
   if (reportElement) {
     reportElement.innerHTML = saved.analysis_html;
@@ -504,7 +504,11 @@ window.addEventListener("load", checkSupabaseSession);
 
 </div>
       `;
-
+const savedAnalysisBox = document.createElement("div");
+savedAnalysisBox.id = "analysis-content-" + index;
+savedAnalysisBox.style.display = "none";
+savedAnalysisBox.style.marginTop = "20px";
+card.appendChild(savedAnalysisBox);
       container.appendChild(card);
 
       displayImages(index);
@@ -792,7 +796,7 @@ async function analyzeIndicator(index) {
         </div>
       </div>
 
-      <div id="analysis-report-${index}">
+      <div id="analysis-content-${index}">
 
         <div style="
           display:grid;
@@ -882,8 +886,7 @@ try {
     return;
   }
 
-  const reportElement = document.getElementById("analysis-report-" + index);
-
+const reportElement = document.getElementById("analysis-content-" + index);
   const { error: saveError } = await supabaseClient
     .from("indicator_analyses")
     .insert({
