@@ -286,16 +286,19 @@ async function loadSavedAnalyses() {
     return;
   }
 
-  window.savedAnalyses = analyses || [];
-const loadedIndicators = new Set();
+ window.savedAnalyses = analyses || [];
+
+const latestByIndicator = new Map();
 
 window.savedAnalyses.forEach(saved => {
   const index = Number(saved.indicator_index);
 
-  if (!saved.analysis_html) return;
-  if (loadedIndicators.has(index)) return;
-  loadedIndicators.add(index);
+  if (!latestByIndicator.has(index) && saved.analysis_html) {
+    latestByIndicator.set(index, saved);
+  }
+});
 
+latestByIndicator.forEach((saved, index) => {
   const reportElement =
     document.getElementById("analysis-content-" + index);
 
@@ -894,7 +897,7 @@ try {
 const reportElement = document.getElementById("analysis-content-" + index);
   const { error: saveError } = await supabaseClient
     .from("indicator_analyses")
-    .insert({
+    .upsert({
       school_id: membership.school_id,
       indicator_index: index,
       file_name: excel.fileName || "",
