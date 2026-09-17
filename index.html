@@ -206,7 +206,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 
  <script>
@@ -540,7 +540,7 @@ alert("خطأ Excel: " + error.message);
 
   reader.readAsArrayBuffer(file);
 }
-function analyzeIndicator(index) {
+async function analyzeIndicator(index) {
   const excel = window.excelData && window.excelData[index];
 
   if (!excel || !excel.rows || excel.rows.length === 0) {
@@ -819,6 +819,51 @@ function analyzeIndicator(index) {
   `;
 
   document.body.appendChild(modal);
+// حفظ تحليل المؤشر في Supabase
+try {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    console.warn("لا توجد جلسة مستخدم لحفظ التحليل");
+    return;
+  }
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    console.error("تعذر تحديد المدرسة:", membershipError);
+    return;
+  }
+
+  const reportElement = document.getElementById("analysis-report-" + index);
+
+  const { error: saveError } = await supabaseClient
+    .from("indicator_analyses")
+    .insert({
+      school_id: membership.school_id,
+      indicator_index: index,
+      file_name: excel.fileName || "",
+      analysis_data: {
+        totalRows,
+        totalColumns,
+        insights
+      },
+      analysis_html: reportElement ? reportElement.innerHTML : "",
+      updated_at: new Date().toISOString()
+    });
+
+  if (saveError) {
+    console.error("خطأ في حفظ التحليل:", saveError);
+  } else {
+    console.log("تم حفظ التحليل في Supabase بنجاح");
+  }
+} catch (error) {
+  console.error("خطأ غير متوقع أثناء حفظ التحليل:", error);
+}
 }
 
 
@@ -987,9 +1032,8 @@ if (excelFiles.length > 0) {
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/csv"
-];
-
+  "text/csv",
+  ];
 
   const { data: sessionData } = await supabaseClient.auth.getSession();
   const session = sessionData.session;
