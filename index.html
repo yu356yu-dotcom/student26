@@ -1582,8 +1582,9 @@ box.appendChild(deleteBtn);
 
   document.addEventListener(
     "DOMContentLoaded",
-    function() {
+    async function() {
       createIndicators();
+      await loadSavedAnalyses();
       loadColors();
     }
   );
