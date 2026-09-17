@@ -240,7 +240,7 @@ async function loginWithSupabase() {
 
   document.getElementById("loginBox").style.display = "none";
   document.getElementById("mainSite").style.display = "block";
-
+await loadSavedAnalyses();
   alert("تم تسجيل الدخول بنجاح ✅");
 }
 
@@ -255,9 +255,39 @@ async function checkSupabaseSession() {
   if (data.session) {
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("mainSite").style.display = "block";
+   await loadSavedAnalyses(); 
   }
 }
+async function loadSavedAnalyses() {
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const session = sessionData.session;
 
+  if (!session) return;
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    console.error("تعذر تحديد المدرسة");
+    return;
+  }
+
+  const { data: analyses, error } = await supabaseClient
+    .from("indicator_analyses")
+    .select("*")
+    .eq("school_id", membership.school_id);
+
+  if (error) {
+    console.error("خطأ في استرجاع التحليلات:", error);
+    return;
+  }
+
+  window.savedAnalyses = analyses || [];
+  console.log("تم استرجاع التحليلات من Supabase:", window.savedAnalyses);
+}
 window.addEventListener("load", checkSupabaseSession);
 
 
