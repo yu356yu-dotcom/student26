@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مؤشرات التوجيه الطلابي V2</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <section id="loginView" class="auth-shell">
+    <div class="auth-card">
+      <div class="brand-mark">م</div>
+      <h1>مؤشرات التوجيه الطلابي</h1>
+      <p>نظام موحد للتوثيق، الملفات، التحليل والتقارير</p>
+      <input id="loginEmail" type="email" placeholder="البريد الإلكتروني" autocomplete="username" />
+      <input id="loginPassword" type="password" placeholder="كلمة المرور" autocomplete="current-password" />
+      <button id="loginBtn" class="btn primary">دخول</button>
+      <div id="loginMessage" class="message"></div>
+    </div>
+  </section>
+
+  <main id="appView" class="hidden">
+    <header class="app-header">
+      <div>
+        <h1>مؤشرات التوجيه الطلابي</h1>
+        <p id="schoolLabel">لوحة المدرسة</p>
+      </div>
+      <div class="header-actions">
+        <button id="refreshBtn" class="btn ghost">↻ تحديث</button>
+        <button id="printAllBtn" class="btn ghost">🖨 طباعة</button>
+        <button id="logoutBtn" class="btn danger">خروج</button>
+      </div>
+    </header>
+
+    <section class="dashboard container">
+      <div class="stat"><span id="indicatorCount">0</span><small>المؤشرات</small></div>
+      <div class="stat"><span id="analysisCount">0</span><small>تحليلات محفوظة</small></div>
+      <div class="stat"><span id="attachmentCount">0</span><small>ملفات مرفوعة</small></div>
+      <div class="stat"><span id="lastUpdate">—</span><small>آخر تحديث</small></div>
+    </section>
+
+    <section class="toolbar container">
+      <input id="searchInput" type="search" placeholder="ابحث في المؤشرات..." />
+      <button id="expandAllBtn" class="btn secondary">فتح جميع المؤشرات</button>
+    </section>
+
+    <section id="indicatorsContainer" class="container"></section>
+  </main>
+
+  <div id="analysisModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">التحليل</h2>
+          <p id="modalMeta"></p>
+        </div>
+        <div class="modal-actions">
+          <button id="modalPrintBtn" class="btn secondary">🖨 طباعة</button>
+          <button id="modalDownloadBtn" class="btn secondary">⬇ تقرير مستقل</button>
+          <button id="modalCloseBtn" class="btn danger">إغلاق</button>
+        </div>
+      </div>
+      <div id="modalAnalysisContent"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

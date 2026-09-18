@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مؤشرات التوجيه الطلابي</title>
+
+  <style>
+    :root {
+      --main-color: #1f6f5f;
+      --background-color: #f5f7f8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: var(--background-color);
+      color: #222;
+    }
+
+    header {
+      background: var(--main-color);
+      color: white;
+      padding: 22px 15px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .container {
+      width: min(1100px, 94%);
+      margin: 20px auto 40px;
+    }
+
+    .top-controls,
+    .color-panel {
+      background: white;
+      padding: 15px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 10px 15px;
+      margin: 4px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .primary-btn {
+      background: var(--main-color);
+      color: white;
+    }
+
+    .secondary-btn {
+      background: #eceff1;
+      color: #222;
+    }
+
+    .print-btn {
+      background: #2563eb;
+      color: white;
+    }
+
+    .delete-btn {
+      background: #b42318;
+      color: white;
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+
+    .indicator-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      border-right: 6px solid var(--main-color);
+    }
+
+    .indicator-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      color: var(--main-color);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px;
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.8;
+      border: 1px solid #ccd2d7;
+      border-radius: 10px;
+      resize: vertical;
+      background: #fafafa;
+    }
+
+    textarea:disabled {
+      background: #f1f3f4;
+      color: #333;
+    }
+
+    .controls {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    input[type="file"] {
+      margin-top: 12px;
+    }
+
+    .gallery {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .image-box {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafafa;
+      padding: 8px;
+    }
+
+    .image-box img {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .image-box .delete-btn {
+      width: 100%;
+      margin-top: 7px;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .locked-note {
+      font-size: 13px;
+      color: #777;
+      margin-top: 7px;
+    }
+
+    @media (max-width: 700px) {
+      header h1 {
+        font-size: 22px;
+      }
+
+      .indicator-title {
+        font-size: 18px;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      .top-controls,
+      .color-panel,
+      button,
+      input[type="file"],
+      .delete-btn {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .indicator-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+
+ <script>
+const SUPABASE_URL = "https://mitzbajoxtaegpgsqvai.supabase.co";
+const SUPABASE_KEY = "sb_publishable_C7XOHoTAaVXfp9penx5jSQ_6FLdFHrO";
+
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function loginWithSupabase() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  if (!email || !password) {
+    alert("أدخل البريد الإلكتروني وكلمة المرور");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    alert("تعذر تسجيل الدخول: " + error.message);
+    return;
+  }
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("mainSite").style.display = "block";
+await loadSavedAnalyses();
+  alert("تم تسجيل الدخول بنجاح ✅");
+}
+
+async function logoutSupabase() {
+  await supabaseClient.auth.signOut();
+  location.reload();
+}
+
+async function checkSupabaseSession() {
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data.session) {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("mainSite").style.display = "block";
+   await loadSavedAnalyses(); 
+  }
+}
+async function loadSavedAnalyses() {
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const session = sessionData.session;
+
+  if (!session) return;
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    console.error("تعذر تحديد المدرسة");
+    return;
+  }
+
+  const { data: analyses, error } = await supabaseClient
+    .from("indicator_analyses")
+    .select("*")
+    .eq("school_id", membership.school_id)
+.order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("خطأ في استرجاع التحليلات:", error);
+    return;
+  }
+
+ window.savedAnalyses = analyses || [];
+
+const latestByIndicator = new Map();
+
+window.savedAnalyses.forEach(saved => {
+  const index = Number(saved.indicator_index);
+
+  if (!latestByIndicator.has(index) && saved.analysis_html) {
+    latestByIndicator.set(index, saved);
+  }
+});
+
+latestByIndicator.forEach((saved, index) => {
+  const reportElement =
+    document.getElementById("analysis-content-" + index);
+
+  if (reportElement) {
+    reportElement.innerHTML = saved.analysis_html;
+    reportElement.style.display = "block";
+   const fileInfo = document.createElement("div");
+fileInfo.style.marginTop = "10px";
+fileInfo.style.padding = "8px";
+fileInfo.style.background = "#f5f5f5";
+fileInfo.style.borderRadius = "6px";
+fileInfo.style.fontSize = "14px";
+
+const updateDate = saved.updated_at
+    ? new Date(saved.updated_at).toLocaleString("ar-SA")
+    : "";
+
+fileInfo.textContent =
+    "📄 آخر ملف: " + (saved.file_name || "غير محدد") +
+    " | 🕒 آخر تحديث: " + updateDate;
+
+reportElement.appendChild(fileInfo); 
+  }
+});
+  console.log("تم استرجاع التحليلات من Supabase:", window.savedAnalyses);
+}
+window.addEventListener("load", checkSupabaseSession);
+
+
+   
+</script>
+
+
+</head>
+
+
+
+<body>
+<!-- تسجيل الدخول -->
+<div id="loginBox" style="max-width:420px;margin:40px auto;padding:25px;border:1px solid #ddd;border-radius:15px;text-align:center;">
+  <h2>تسجيل الدخول</h2>
+
+  <input
+    id="loginEmail"
+    type="email"
+    placeholder="البريد الإلكتروني"
+    style="width:90%;padding:12px;margin:8px;"
+  >
+
+  <input
+    id="loginPassword"
+    type="password"
+    placeholder="كلمة المرور"
+    style="width:90%;padding:12px;margin:8px;"
+  >
+
+  <button onclick="loginWithSupabase()" style="padding:12px 25px;">
+    دخول
+  </button>
+</div>
+
+<div id="mainSite" style="display:none;">
+<header>
+  <h1>مؤشرات التوجيه الطلابي</h1>
+  <p>نظام توثيق التقارير والشواهد والصور</p>
+</header>
+
+<div class="container">
+
+  <div class="top-controls">
+    <button class="primary-btn" onclick="unlockAll()">🔓 فتح تعديل جميع المؤشرات</button>
+    <button class="secondary-btn" onclick="lockAll()">🔒 قفل جميع المؤشرات</button>
+    <button class="print-btn" onclick="window.print()">🖨️ طباعة التقرير كاملًا</button>
+  </div>
+
+  <div class="color-panel">
+    <strong>تخصيص ألوان الواجهة</strong>
+
+    <div class="color-row" style="margin-top:12px;">
+      <label>
+        اللون الرئيسي:
+        <input type="color" id="mainColor" value="#1f6f5f">
+      </label>
+
+      <label>
+        لون الخلفية:
+        <input type="color" id="backgroundColor" value="#f5f7f8">
+      </label>
+
+      <button class="primary-btn" onclick="applyColors()">تطبيق الألوان</button>
+      <button class="secondary-btn" onclick="resetColors()">إعادة الألوان</button>
+    </div>
+  </div>
+
+  <div id="indicatorsContainer"></div>
+
+</div>
+
+<script>
+  const password = "y123";
+
+  const indicators = [
+    {
+      title: "تعزز المدرسة القيم الإسلامية والهوية الوطنية",
+      report: "نفذت المدرسة عددًا من البرامج والأنشطة التي تهدف إلى تعزيز القيم الإسلامية والهوية الوطنية لدى الطلاب، من خلال البرامج التوعوية والأنشطة المدرسية والمناسبات الوطنية، بما يسهم في تعزيز الانتماء والاعتزاز بالقيم الوطنية والإسلامية."
+    },
+    {
+      title: "يظهر المتعلمون الاعتزاز بالقيم والهوية الوطنية",
+      report: "حرصت المدرسة على تعزيز اعتزاز الطلاب بالقيم والهوية الوطنية من خلال الأنشطة والبرامج الهادفة والمشاركة في المناسبات الوطنية وتنمية الشعور بالانتماء والمسؤولية تجاه الوطن."
+    },
+    {
+      title: "توفر المدرسة مناخًا آمنًا للتعلم والنمو النفسي والاجتماعي",
+      report: "عملت المدرسة على توفير بيئة مدرسية آمنة ومحفزة للتعلم والنمو النفسي والاجتماعي، من خلال المتابعة المستمرة للطلاب والتوجيه والإرشاد ومعالجة المشكلات الطلابية بصورة تربوية."
+    },
+    {
+      title: "تنشر المدرسة قواعد السلوك والمواظبة وتتابع تطبيقها",
+      report: "قامت المدرسة بنشر قواعد السلوك والمواظبة وتعريف الطلاب وأولياء الأمور بها، مع متابعة تطبيقها بصورة مستمرة واتخاذ الإجراءات التربوية المناسبة لتعزيز الانضباط المدرسي."
+    },
+    {
+      title: "توفر المدرسة برامج وأنشطة تربوية داعمة للسلوك الإيجابي",
+      report: "نفذت المدرسة برامج وأنشطة تربوية لتعزيز السلوك الإيجابي لدى الطلاب، مثل برامج التحفيز والتكريم وتعزيز الانضباط والمسؤولية والاحترام."
+    },
+    {
+      title: "تظهر المدرسة مشاركة الأسرة في تعلم أبنائهم والتحضير لمستقبلهم",
+      report: "تم تعزيز مشاركة الأسرة في العملية التعليمية من خلال التواصل المستمر مع أولياء الأمور وعقد الاجتماعات وإرسال الرسائل التوعوية ومتابعة المستوى الدراسي والسلوكي للطلاب."
+    },
+    {
+      title: "يظهر المتعلمون التزامًا بالممارسات الصحية السليمة",
+      report: "نفذت المدرسة برامج توعوية لتعزيز الممارسات الصحية السليمة لدى الطلاب، ومنها التوعية بالنظافة الشخصية والتغذية السليمة والوقاية والمحافظة على الصحة العامة."
+    },
+    {
+      title: "يلتزم المتعلمون بقواعد السلوك والانضباط المدرسي",
+      report: "تتابع المدرسة التزام الطلاب بقواعد السلوك والانضباط المدرسي من خلال المتابعة اليومية للحضور والمواظبة وتنفيذ برامج التوجيه والإرشاد وتحفيز الطلاب المنضبطين."
+    },
+    {
+      title: "يظهر المتعلمون اعتزازًا بثقافتهم واحترامًا للتنوع الثقافي في المجتمع",
+      report: "نفذت المدرسة برامج تربوية لتعزيز اعتزاز الطلاب بثقافتهم واحترام التنوع الثقافي في المجتمع وتنمية قيم الاحترام والتسامح والتعايش الإيجابي."
+    },
+    {
+      title: "تنمي المدرسة المهارات العاطفية والاجتماعية لدى المتعلمين",
+      report: "عملت المدرسة على تنمية المهارات العاطفية والاجتماعية لدى الطلاب من خلال البرامج الإرشادية التي تتناول مهارات التواصل والثقة بالنفس وحل المشكلات وإدارة الانفعالات والعمل الجماعي."
+    },
+    {
+      title: "يظهر المتعلمون اتجاهات إيجابية نحو ذواتهم",
+      report: "قدمت المدرسة برامج إرشادية وتحفيزية تساعد الطلاب على تكوين اتجاهات إيجابية نحو ذواتهم وتعزيز الثقة بالنفس والطموح والتخطيط للمستقبل."
+    }
+  ];
+
+  function createIndicators() {
+    const container = document.getElementById("indicatorsContainer");
+    container.innerHTML = "";
+
+    indicators.forEach((item, index) => {
+     item.indicatorId = index + 1;
+      const savedReport =
+        localStorage.getItem("report_" + index) || item.report;
+
+      const card = document.createElement("div");
+      card.className = "indicator-card";
+      card.id = "indicator-" + index;
+
+      card.innerHTML = `
+        <div class="indicator-title">
+          المؤشر ${index + 1}: ${item.title}
+        </div>
+
+        <textarea
+          id="report-${index}"
+          disabled
+          oninput="saveReport(${index})"
+        >${savedReport}</textarea>
+
+        <div class="controls">
+          <button
+            class="primary-btn"
+            onclick="unlockIndicator(${index})"
+          >
+            🔓 فتح التعديل
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="lockIndicator(${index})"
+          >
+            🔒 قفل
+          </button>
+
+          <button
+            class="print-btn"
+            onclick="printIndicator(${index})"
+          >
+            🖨️ طباعة هذا المؤشر
+          </button>
+        </div>
+
+        <div class="locked-note">
+          يلزم إدخال كلمة المرور لتمكين التعديل وإضافة الصور.
+        </div>
+
+        <input
+  type="file"
+  id="file-${index}"
+  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+  multiple
+  disabled
+  onchange="addImages(${index}, this.files)"
+>
+
+        <div
+          class="gallery"
+          id="gallery-${index}"
+        ></div><div class="data-source-controls">
+
+  <button
+    class="secondary-btn"
+    onclick="connectDataSource(${index})"
+  >
+    🔗 ربط مصدر بيانات
+  </button>
+
+  <button
+    class="primary-btn"
+    onclick="analyzeIndicator(${index})"
+  >
+    ✨ تحليل الآن
+  </button>
+
+</div>
+      `;
+const savedAnalysisBox = document.createElement("div");
+savedAnalysisBox.id = "analysis-content-" + index;
+savedAnalysisBox.style.display = "none";
+savedAnalysisBox.style.marginTop = "20px";
+card.appendChild(savedAnalysisBox);
+      container.appendChild(card);
+
+      displayImages(index);
+    });
+  }
+function connectDataSource(index) {
+  const input = document.createElement("input");
+
+  input.type = "file";
+  input.accept = ".xlsx,.xls,.csv";
+
+  input.onchange = function () {
+    const file = input.files[0];
+
+    if (!file) return;
+
+    handleExcelFile(index, file);
+  };
+
+  input.click();
+}
+
+function handleExcelFile(index, file) {
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+
+      const workbook = XLSX.read(data, {
+        type: "array"
+      });
+
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      const rows = XLSX.utils.sheet_to_json(
+        worksheet,
+        {
+          header: 1,
+          defval: ""
+        }
+      );
+
+      const headers = rows.length > 0 ? rows[0] : [];
+      const dataRows = rows.slice(1);
+
+      window.excelData = window.excelData || {};
+      window.excelData[index] = {
+        fileName: file.name,
+        sheetName: firstSheetName,
+        headers: headers,
+        rows: dataRows
+      };
+
+      alert(
+        "تمت قراءة ملف Excel بنجاح ✅" +
+        "\n\nالمؤشر رقم: " + (index + 1) +
+        "\nاسم الملف: " + file.name +
+        "\nاسم الورقة: " + firstSheetName +
+        "\nعدد الأعمدة: " + headers.length +
+        "\nعدد الصفوف: " + dataRows.length
+      );
+      analyzeIndicator(index);
+
+    } catch (error) {
+      console.error("Excel Error:", error);
+alert("خطأ Excel: " + error.message);
+
+      alert(
+        "تعذر قراءة ملف Excel.\n" +
+        "تأكد أن الملف بصيغة xlsx أو xls أو csv."
+      );
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+async function analyzeIndicator(index) {
+  const excel = window.excelData && window.excelData[index];
+
+  if (!excel || !excel.rows || excel.rows.length === 0) {
+    alert("يرجى ربط ملف Excel بالمؤشر أولاً");
+    return;
+  }
+
+  const headers = excel.headers || [];
+  const rows = excel.rows.filter(row =>
+    row && row.some(cell => String(cell ?? "").trim() !== "")
+  );
+
+  const totalRows = rows.length;
+  const totalColumns = headers.length;
+
+  // البحث عن الأعمدة المناسبة للتحليل
+  const columnStats = headers.map((header, colIndex) => {
+    const values = rows
+      .map(row => String(row[colIndex] ?? "").trim())
+      .filter(v => v !== "");
+
+    const counts = {};
+    values.forEach(v => {
+      counts[v] = (counts[v] || 0) + 1;
+    });
+
+    const uniqueCount = Object.keys(counts).length;
+
+    return {
+      header: String(header || "عمود " + (colIndex + 1)),
+      colIndex,
+      values,
+      counts,
+      uniqueCount
+    };
+  });
+
+  // اختيار أفضل الأعمدة التصنيفية مثل الشعبة والحالة والصف
+  const preferredWords = [
+    "شعبة", "الشعبة",
+    "صف", "الصف",
+    "مرحلة", "المرحلة",
+    "حالة", "الحالة",
+    "نوع", "التصنيف",
+    "غياب", "حضور"
+  ];
+
+  const categorical = columnStats
+    .filter(c => c.uniqueCount >= 2 && c.uniqueCount <= 15)
+    .sort((a, b) => {
+      const aScore = preferredWords.some(w => a.header.includes(w)) ? 1 : 0;
+      const bScore = preferredWords.some(w => b.header.includes(w)) ? 1 : 0;
+      return bScore - aScore;
+    })
+    .slice(0, 3);
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function createBars(column) {
+    const entries = Object.entries(column.counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const max = Math.max(...entries.map(e => e[1]), 1);
+
+    return entries.map(([name, count]) => {
+      const percent = Math.round((count / max) * 100);
+      const share = totalRows
+        ? ((count / totalRows) * 100).toFixed(1)
+        : 0;
+
+      return `
+        <div style="margin:12px 0;">
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:15px;
+            margin-bottom:5px;
+            font-size:14px;">
+            <strong>${escapeHTML(name)}</strong>
+            <span>${count} (${share}%)</span>
+          </div>
+
+          <div style="
+            height:20px;
+            background:#e9eeee;
+            border-radius:10px;
+            overflow:hidden;">
+            <div style="
+              width:${percent}%;
+              height:100%;
+              background:linear-gradient(90deg,#0f766e,#14b8a6);
+              border-radius:10px;">
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  let chartsHTML = "";
+
+  categorical.forEach(column => {
+    chartsHTML += `
+      <div style="
+        background:white;
+        border:1px solid #e5e7eb;
+        border-radius:16px;
+        padding:20px;
+        margin-top:18px;">
+        <h3 style="margin-top:0;color:#0f766e;">
+          تحليل ${escapeHTML(column.header)}
+        </h3>
+        ${createBars(column)}
+      </div>
+    `;
+  });
+
+  let insights = [];
+
+  categorical.forEach(column => {
+    const entries = Object.entries(column.counts)
+      .sort((a, b) => b[1] - a[1]);
+
+    if (entries.length > 0) {
+      insights.push(
+        `أعلى قيمة في ${column.header}: ${entries[0][0]} بعدد ${entries[0][1]} سجل`
+      );
+    }
+  });
+
+  if (insights.length === 0) {
+    insights.push("تمت قراءة البيانات بنجاح، ولم يتم العثور على عمود تصنيفي مناسب للرسم.");
+  }
+
+  let oldModal = document.getElementById("analysis-modal-" + index);
+  if (oldModal) oldModal.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "analysis-modal-" + index;
+
+  modal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:rgba(0,0,0,.55);
+    overflow:auto;
+    padding:25px;
+    direction:rtl;
+    font-family:Arial,Tahoma,sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="
+      max-width:1100px;
+      margin:auto;
+      background:#f8fafc;
+      border-radius:20px;
+      padding:25px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        flex-wrap:wrap;
+        gap:12px;
+        margin-bottom:20px;">
+
+        <div>
+          <h2 style="margin:0;color:#134e4a;">
+            📊 التحليل الذكي للمؤشر رقم ${index + 1}
+          </h2>
+
+          <div style="margin-top:6px;color:#64748b;">
+            ${escapeHTML(excel.fileName || "")}
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="printAnalysisReport(${index})"
+            style="padding:10px 16px;border:0;border-radius:10px;cursor:pointer;">
+            🖨️ طباعة
+          </button>
+
+          <button onclick="printAnalysisReport(${index})"
+            style="padding:10px 16px;border:0;border-radius:10px;background:#0f766e;color:white;cursor:pointer;">
+            📄 حفظ PDF
+          </button>
+
+          <button onclick="downloadAnalysisReport(${index})"
+            style="padding:10px 16px;border:0;border-radius:10px;background:#1d4ed8;color:white;cursor:pointer;">
+            ⬇️ تقرير مستقل
+          </button>
+
+          <button onclick="document.getElementById('analysis-modal-${index}').remove()"
+            style="padding:10px 16px;border:0;border-radius:10px;background:#b91c1c;color:white;cursor:pointer;">
+            ✕ إغلاق
+          </button>
+        </div>
+      </div>
+
+      <div id="analysis-content-${index}">
+
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+          gap:15px;">
+
+          <div style="background:white;padding:20px;border-radius:16px;text-align:center;">
+            <div style="font-size:30px;font-weight:bold;color:#0f766e;">
+              ${totalRows}
+            </div>
+            <div>إجمالي السجلات</div>
+          </div>
+
+          <div style="background:white;padding:20px;border-radius:16px;text-align:center;">
+            <div style="font-size:30px;font-weight:bold;color:#0f766e;">
+              ${totalColumns}
+            </div>
+            <div>عدد الأعمدة</div>
+          </div>
+
+          <div style="background:white;padding:20px;border-radius:16px;text-align:center;">
+            <div style="font-size:30px;font-weight:bold;color:#0f766e;">
+              ${categorical.length}
+            </div>
+            <div>محاور التحليل</div>
+          </div>
+
+          <div style="background:white;padding:20px;border-radius:16px;text-align:center;">
+            <div style="font-size:22px;font-weight:bold;color:#0f766e;">
+              ${escapeHTML(excel.sheetName || "-")}
+            </div>
+            <div>ورقة البيانات</div>
+          </div>
+
+        </div>
+
+        ${chartsHTML}
+
+        <div style="
+          background:white;
+          border:1px solid #e5e7eb;
+          border-radius:16px;
+          padding:20px;
+          margin-top:18px;">
+
+          <h3 style="color:#0f766e;margin-top:0;">
+            ✨ أبرز النتائج والتوصيات
+          </h3>
+
+          <ul style="line-height:2;">
+            ${insights.map(item => `<li>${escapeHTML(item)}</li>`).join("")}
+            <li>يوصى بمتابعة القيم الأعلى ومقارنتها دوريًا مع التحديث القادم للبيانات.</li>
+          </ul>
+        </div>
+
+        <div style="
+          text-align:center;
+          color:#64748b;
+          margin-top:20px;
+          font-size:13px;">
+          تم إنشاء التحليل تلقائيًا من ملف Excel
+          • ${new Date().toLocaleString("ar-SA")}
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+// حفظ تحليل المؤشر في Supabase
+try {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    console.warn("لا توجد جلسة مستخدم لحفظ التحليل");
+    return;
+  }
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    console.error("تعذر تحديد المدرسة:", membershipError);
+    return;
+  }
+
+const reportElement = document.getElementById("analysis-content-" + index);
+  const { error: saveError } = await supabaseClient
+    .from("indicator_analyses")
+    .upsert({
+      school_id: membership.school_id,
+      indicator_index: index,
+      file_name: excel.fileName || "",
+      analysis_data: {
+        totalRows,
+        totalColumns,
+        insights
+      },
+      analysis_html: reportElement ? reportElement.innerHTML : "",
+      updated_at: new Date().toISOString()
+    });
+
+  if (saveError) {
+    console.error("خطأ في حفظ التحليل:", saveError);
+  } else {
+    console.log("تم حفظ التحليل في Supabase بنجاح");
+  }
+} catch (error) {
+  console.error("خطأ غير متوقع أثناء حفظ التحليل:", error);
+}
+}
+
+
+function printAnalysisReport(index) {
+  const report = document.getElementById("analysis-report-" + index);
+
+  if (!report) {
+    alert("لا يوجد تحليل للطباعة");
+    return;
+  }
+
+  const win = window.open("", "_blank");
+
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير تحليل المؤشر</title>
+      <style>
+        body{
+          font-family:Arial,Tahoma,sans-serif;
+          direction:rtl;
+          margin:30px;
+          background:white;
+        }
+        @media print{
+          body{margin:10mm;}
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align:center;color:#134e4a;">
+        تقرير التحليل الآلي
+      </h1>
+      ${report.innerHTML}
+    </body>
+    </html>
+  `);
+
+  win.document.close();
+
+  setTimeout(() => {
+    win.print();
+  }, 500);
+}
+
+
+function downloadAnalysisReport(index) {
+  const report = document.getElementById("analysis-report-" + index);
+
+  if (!report) {
+    alert("لا يوجد تحليل للتصدير");
+    return;
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير تحليل المؤشر ${index + 1}</title>
+      <style>
+        body{
+          font-family:Arial,Tahoma,sans-serif;
+          direction:rtl;
+          margin:30px;
+          background:#f8fafc;
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align:center;color:#134e4a;">
+        تقرير التحليل الآلي
+      </h1>
+      ${report.innerHTML}
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([html], {
+    type: "text/html;charset=utf-8"
+  });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `تحليل-المؤشر-${index + 1}.html`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(link.href);
+}
+  function checkPassword() {
+    const entered = prompt("أدخل كلمة المرور:");
+    return entered === password;
+  }
+
+  function unlockIndicator(index) {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    document.getElementById("report-" + index).disabled = false;
+    document.getElementById("file-" + index).disabled = false;
+  }
+
+  function lockIndicator(index) {
+    document.getElementById("report-" + index).disabled = true;
+    document.getElementById("file-" + index).disabled = true;
+  }
+
+  function unlockAll() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    indicators.forEach((_, index) => {
+      document.getElementById("report-" + index).disabled = false;
+      document.getElementById("file-" + index).disabled = false;
+    });
+  }
+
+  function lockAll() {
+    indicators.forEach((_, index) => {
+      lockIndicator(index);
+    });
+  }
+
+  function saveReport(index) {
+    const report =
+      document.getElementById("report-" + index).value;
+
+    localStorage.setItem(
+      "report_" + index,
+      report
+    );
+  }
+
+async function addImages(index, files) {
+  if (!files || files.length === 0) return;
+const selectedFiles = Array.from(files);
+
+const excelFiles = selectedFiles.filter(file => {
+  const name = file.name.toLowerCase();
+  return name.endsWith(".xlsx") ||
+         name.endsWith(".xls") ||
+         name.endsWith(".csv");
+});
+
+if (excelFiles.length > 0) {
+  excelFiles.forEach(file => handleExcelFile(index, file));
+
+  // إذا كان الاختيار يحتوي Excel فقط، لا نكمل إلى رفع المرفقات
+  const otherFiles = selectedFiles.filter(file => !excelFiles.includes(file));
+  if (otherFiles.length === 0) return;
+
+  files = otherFiles;
+}
+  const allowedTypes = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  ];
+
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const session = sessionData.session;
+
+  if (!session) {
+    alert("يجب تسجيل الدخول أولاً");
+    return;
+  }
+
+  const { data: membership, error: membershipError } = await supabaseClient
+    .from("school_memberships")
+    .select("school_id")
+    .eq("user_id", session.user.id)
+    .single();
+
+  if (membershipError || !membership) {
+    alert("تعذر تحديد المدرسة المرتبطة بالحساب");
+    return;
+  }
+
+  const schoolId = membership.school_id;
+
+  for (const file of Array.from(files)) {
+    const allowed =
+      file.type.startsWith("image/") ||
+      allowedTypes.includes(file.type);
+
+    if (!allowed) {
+      alert("الملف غير مدعوم: " + file.name);
+      continue;
+    }
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath =
+      schoolId + "/" +
+      index + "/" +
+      Date.now() + "_" +
+      safeName;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from("indicator-files")
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      alert("تعذر رفع الملف: " + uploadError.message);
+      continue;
+    }
+
+    const { error: dbError } = await supabaseClient
+      .from("indicator_attachments")
+      .insert({
+        indicator_index: index,
+        file_name: file.name,
+        file_path: filePath,
+        mime_type: file.type,
+        file_size: file.size,
+        created_by: session.user.id,
+        school_id: schoolId
+      });
+
+    if (dbError) {
+      await supabaseClient.storage
+        .from("indicator-files")
+        .remove([filePath]);
+
+      alert("تعذر حفظ بيانات الملف: " + dbError.message);
+      continue;
+    }
+  }
+
+  document.getElementById("file-" + index).value = "";
+
+  await displayImages(index);
+
+  alert("تم رفع الملفات بنجاح ✅");
+}
+  
+        
+
+ async function displayImages(index) {
+  const gallery = document.getElementById("gallery-" + index);
+  if (!gallery) return;
+
+  gallery.innerHTML = "جاري تحميل الملفات...";
+
+  const { data: attachments, error } = await supabaseClient
+    .from("indicator_attachments")
+    .select("*")
+    .eq("indicator_index", index)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    gallery.innerHTML = "تعذر تحميل الملفات";
+    console.error(error);
+    return;
+  }
+
+  gallery.innerHTML = "";
+
+  if (!attachments || attachments.length === 0) {
+    return;
+  }
+
+  for (const attachment of attachments) {
+    const { data: signedData, error: urlError } =
+      await supabaseClient.storage
+        .from("indicator-files")
+        .createSignedUrl(attachment.file_path, 3600);
+
+    if (urlError || !signedData) {
+      console.error(urlError);
+      continue;
+    }
+
+    const box = document.createElement("div");
+    box.className = "image-box";
+
+    if (
+      attachment.mime_type &&
+      attachment.mime_type.startsWith("image/")
+    ) {
+      const img = document.createElement("img");
+      img.src = signedData.signedUrl;
+      img.alt = attachment.file_name;
+      box.appendChild(img);
+    } else {
+      const fileBox = document.createElement("div");
+      fileBox.style.padding = "15px";
+      fileBox.style.textAlign = "center";
+      fileBox.style.border = "1px solid #ddd";
+      fileBox.style.borderRadius = "8px";
+
+      const icon = document.createElement("div");
+      icon.style.fontSize = "35px";
+      icon.textContent =
+        attachment.mime_type === "application/pdf" ? "📕" : "📄";
+
+      const name = document.createElement("div");
+      name.textContent = attachment.file_name;
+
+      const link = document.createElement("a");
+      link.href = signedData.signedUrl;
+      link.target = "_blank";
+      link.textContent = "فتح الملف";
+
+      fileBox.appendChild(icon);
+      fileBox.appendChild(name);
+      fileBox.appendChild(link);
+
+      box.appendChild(fileBox);
+    }
+const deleteBtn = document.createElement("button");
+deleteBtn.textContent = "حذف";
+deleteBtn.className = "delete-btn";
+
+deleteBtn.onclick = function () {
+  deleteImage(
+    index,
+    attachment.id,
+    attachment.file_path
+  );
+};
+
+box.appendChild(deleteBtn);
+    gallery.appendChild(box);
+  }
+}
+   async function deleteImage(index, attachmentId, filePath) {
+  const ok = confirm("هل تريد حذف هذا الملف؟");
+  if (!ok) return;
+
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+
+  if (!sessionData.session) {
+    alert("يجب تسجيل الدخول أولاً");
+    return;
+  }
+
+  const { error: storageError } = await supabaseClient.storage
+    .from("indicator-files")
+    .remove([filePath]);
+
+  if (storageError) {
+    alert("تعذر حذف الملف من التخزين: " + storageError.message);
+    return;
+  }
+
+  const { error: dbError } = await supabaseClient
+    .from("indicator_attachments")
+    .delete()
+    .eq("id", attachmentId);
+
+  if (dbError) {
+    alert("تم حذف الملف ولكن تعذر حذف بياناته: " + dbError.message);
+    return;
+  }
+
+  await displayImages(index);
+
+  alert("تم حذف الملف بنجاح ✅");
+}
+  function applyColors() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    const mainColor =
+      document.getElementById("mainColor").value;
+
+    const backgroundColor =
+      document.getElementById("backgroundColor").value;
+
+    document.documentElement.style.setProperty(
+      "--main-color",
+      mainColor
+    );
+
+    document.documentElement.style.setProperty(
+      "--background-color",
+      backgroundColor
+    );
+
+    localStorage.setItem(
+      "mainColor",
+      mainColor
+    );
+
+    localStorage.setItem(
+      "backgroundColor",
+      backgroundColor
+    );
+  }
+
+  function resetColors() {
+    if (!checkPassword()) {
+      alert("كلمة المرور غير صحيحة");
+      return;
+    }
+
+    localStorage.removeItem("mainColor");
+    localStorage.removeItem("backgroundColor");
+
+    document.documentElement.style.setProperty(
+      "--main-color",
+      "#1f6f5f"
+    );
+
+    document.documentElement.style.setProperty(
+      "--background-color",
+      "#f5f7f8"
+    );
+
+    document.getElementById("mainColor").value =
+      "#1f6f5f";
+
+    document.getElementById("backgroundColor").value =
+      "#f5f7f8";
+  }
+
+  function loadColors() {
+    const mainColor =
+      localStorage.getItem("mainColor");
+
+    const backgroundColor =
+      localStorage.getItem("backgroundColor");
+
+    if (mainColor) {
+      document.documentElement.style.setProperty(
+        "--main-color",
+        mainColor
+      );
+
+      document.getElementById("mainColor").value =
+        mainColor;
+    }
+
+    if (backgroundColor) {
+      document.documentElement.style.setProperty(
+        "--background-color",
+        backgroundColor
+      );
+
+      document.getElementById(
+        "backgroundColor"
+      ).value = backgroundColor;
+    }
+  }
+
+  function printIndicator(index) {
+    const item = indicators[index];
+    const report =
+      document.getElementById("report-" + index).value;
+
+    const images =
+      JSON.parse(
+        localStorage.getItem("images_" + index) || "[]"
+      );
+
+    const imagesHTML = images.map(image => `
+      <div class="print-image">
+        <img src="${image}">
+      </div>
+    `).join("");
+
+    const printWindow =
+      window.open("", "_blank");
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+
+      <html lang="ar" dir="rtl">
+
+      <head>
+
+        <meta charset="UTF-8">
+
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1"
+        >
+
+        <title>
+          تقرير المؤشر ${index + 1}
+        </title>
+
+        <style>
+
+          body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 35px;
+            color: #222;
+            background: white;
+          }
+
+          .school-header {
+            text-align: center;
+            border-bottom: 3px solid #1f6f5f;
+            padding-bottom: 18px;
+            margin-bottom: 28px;
+          }
+
+          .school-header h1 {
+            margin: 0;
+            font-size: 26px;
+          }
+
+          .school-header p {
+            margin: 8px 0 0;
+            font-size: 17px;
+          }
+
+          .indicator-number {
+            color: #1f6f5f;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+
+          .indicator-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 25px;
+          }
+
+          .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0 10px;
+            color: #1f6f5f;
+          }
+
+          .report-box {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 18px;
+            font-size: 17px;
+            line-height: 2;
+            white-space: pre-wrap;
+          }
+
+          .images-container {
+            margin-top: 20px;
+          }
+
+          .print-image {
+            margin-bottom: 18px;
+            text-align: center;
+            page-break-inside: avoid;
+          }
+
+          .print-image img {
+            max-width: 100%;
+            max-height: 650px;
+            object-fit: contain;
+            border-radius: 8px;
+          }
+
+          .footer {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+          }
+
+          @media print {
+            body {
+              padding: 15px;
+            }
+          }
+
+        </style>
+      </head>
+
+      <body>
+
+        <div class="school-header">
+
+          <h1>
+            تقرير مؤشرات التوجيه الطلابي
+          </h1>
+
+          <p>
+            ثانوية مجمع الأمير فهد بن سلطان
+          </p>
+
+        </div>
+
+        <div class="indicator-number">
+          المؤشر رقم ${index + 1}
+        </div>
+
+        <div class="indicator-title">
+          ${item.title}
+        </div>
+
+        <div class="section-title">
+          التقرير
+        </div>
+
+        <div class="report-box">
+          ${report}
+        </div>
+
+        ${
+          images.length > 0
+          ?
+          `
+            <div class="section-title">
+              الشواهد والصور
+            </div>
+
+            <div class="images-container">
+              ${imagesHTML}
+            </div>
+          `
+          :
+          `
+            <div class="section-title">
+              الشواهد والصور
+            </div>
+
+            <p>
+              لا توجد صور مرفقة لهذا المؤشر.
+            </p>
+          `
+        }
+
+        <div class="footer">
+          نظام توثيق مؤشرات التوجيه الطلابي
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        <\/script>
+
+      </body>
+
+      </html>
+    `);
+
+    printWindow.document.close();
+  }
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    async function() {
+      createIndicators();
+      await loadSavedAnalyses();
+      loadColors();
+    }
+  );
+</script>
+</div>
+</body>
+</html>
