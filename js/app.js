@@ -150,13 +150,43 @@
   }
 
   async function analyze(index){
-    const excel=state.excel.get(index); if(!excel?.rows?.length){alert("اختر ملف Excel أولاً");return;}
-    const result=buildAnalysis(index,excel);
-    // نحفظ HTML الناتج مباشرة؛ لا نعتمد على عنصر DOM مكرر كما في النسخة القديمة.
-    const {data,error}=await db.from("indicator_analyses").insert({school_id:state.schoolId,indicator_index:index,file_name:excel.fileName||"",analysis_data:result.data,analysis_html:result.html,updated_at:new Date().toISOString()}).select().single();
-    if(error){alert("تعذر حفظ التحليل: "+error.message);return;}
-    state.analyses.set(index,data); showAnalysis(index,data); renderIndicators(); updateStats();
+  const excel=state.excel.get(index);
+  if(!excel?.rows?.length){
+    alert("أولاً اختر ملف Excel");
+    return;
   }
+
+  const result=buildAnalysis(index,excel);
+
+  // تحديد فترة التحليل تلقائياً
+  const now=new Date();
+  const analysisYear=now.getFullYear();
+  const analysisMonth=now.getMonth()+1;
+  const periodLabel=`${analysisYear}-${String(analysisMonth).padStart(2,"0")}`;
+
+  // حفظ تحليل جديد مستقل وعدم الكتابة فوق التحليلات السابقة
+  const {data,error}=await db.from("indicator_analyses").insert({
+    school_id:state.schoolId,
+    indicator_index:index,
+    file_name:excel.fileName||"",
+    analysis_data:result.data,
+    analysis_html:result.html,
+    analysis_year:analysisYear,
+    analysis_month:analysisMonth,
+    period_label:periodLabel,
+    updated_at:now.toISOString()
+  }).select().single();
+
+  if(error){
+    alert("تعذر حفظ التحليل: "+error.message);
+    return;
+  }
+
+  state.analyses.set(index,data);
+  showAnalysis(index,data);
+  renderIndicators();
+  updateStats();
+}
 
   function showAnalysis(index,row){state.modalIndex=index;$("modalTitle").textContent=`التحليل الذكي للمؤشر ${index+1}`;$("modalMeta").textContent=`${row.file_name||""} • ${fmt(row.updated_at||row.created_at)}`;$("modalAnalysisContent").innerHTML=row.analysis_html||"لا يوجد محتوى";$("analysisModal").classList.remove("hidden");$("analysisModal").setAttribute("aria-hidden","false");}
   function closeModal(){$("analysisModal").classList.add("hidden");$("analysisModal").setAttribute("aria-hidden","true");}
