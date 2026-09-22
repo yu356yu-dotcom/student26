@@ -188,7 +188,70 @@
   updateStats();
 }
 
-  function showAnalysis(index,row){state.modalIndex=index;$("modalTitle").textContent=`التحليل الذكي للمؤشر ${index+1}`;$("modalMeta").textContent=`${row.file_name||""} • ${fmt(row.updated_at||row.created_at)}`;$("modalAnalysisContent").innerHTML=row.analysis_html||"لا يوجد محتوى";$("analysisModal").classList.remove("hidden");$("analysisModal").setAttribute("aria-hidden","false");}
+  function showAnalysis(index,row){state.modalIndex=index;$("modalTitle").textContent=`التحليل الذكي للمؤشر ${index+1}`;$("modalMeta").textContent=`${row.file_name||""} • ${fmt(row.updated_at||row.created_at)}`;$("modalAnalysisContent").innerHTML=row.analysis_html||"لا يوجد محتوى";$("analysisModal").classList.remove("hidden");$("analysisModal").setAttribute("aria-hidden","false");loadAnalysisHistory(index);}
+
+  async function loadAnalysisHistory(index) {
+  const { data, error } = await db
+    .from("indicator_analyses")
+    .select("*")
+    .eq("school_id", state.schoolId)
+    .eq("indicator_index", index)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert("تعذر تحميل سجل التحليلات: " + error.message);
+    return [];
+  }
+
+  const list = $("analysisHistoryList");
+
+  if (list) {
+    if (!data || data.length === 0) {
+      list.innerHTML = "<p>لا توجد تحليلات سابقة لهذا المؤشر.</p>";
+    } else {
+      list.innerHTML = data.map((row, i) => `
+        <div style="padding:10px;border:1px solid #ddd;border-radius:8px;margin:8px 0;">
+          <strong>${row.period_label || "بدون فترة"}</strong>
+          <span> — ${row.file_name || "بدون اسم ملف"}</span>
+
+          <button
+            class="btn secondary"
+            onclick="openHistoryAnalysis(${index}, ${i})">
+            عرض التحليل
+          </button>
+        </div>
+      `).join("");
+    }
+  }
+
+  window.analysisHistoryData = data || [];
+
+  return data || [];
+}
+
+
+window.openHistoryAnalysis = function(index, i){
+  const row = window.analysisHistoryData?.[i];
+
+  if (!row) {
+    alert("تعذر العثور على التحليل");
+    return;
+  }
+
+  state.modalIndex = index;
+
+  $("modalTitle").textContent =
+    `التحليل المحفوظ للمؤشر ${index + 1}`;
+
+  $("modalMeta").textContent =
+    `${row.period_label || "بدون فترة"} • ${row.file_name || ""} • ${fmt(row.updated_at || row.created_at)}`;
+
+  $("modalAnalysisContent").innerHTML =
+    row.analysis_html || "لا يوجد محتوى";
+
+  $("analysisModal").classList.remove("hidden");
+  $("analysisModal").setAttribute("aria-hidden", "false");
+}
   function closeModal(){$("analysisModal").classList.add("hidden");$("analysisModal").setAttribute("aria-hidden","true");}
   function printModal(){window.print();}
   function downloadModal(){const i=state.modalIndex,row=state.analyses.get(i);if(!row)return;const html=`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تحليل المؤشر ${i+1}</title><style>body{font-family:Tahoma,Arial;padding:30px;direction:rtl}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric,.chart-card{border:1px solid #ddd;border-radius:12px;padding:15px;margin:10px 0}.bar-track{height:16px;background:#eee;border-radius:8px;overflow:hidden}.bar-fill{height:100%;background:#176b5b}</style><body><h1>تقرير التحليل الآلي - المؤشر ${i+1}</h1>${row.analysis_html}</body></html>`;const blob=new Blob([html],{type:"text/html;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`تحليل-المؤشر-${i+1}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
