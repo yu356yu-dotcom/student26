@@ -159,16 +159,42 @@
   const result=buildAnalysis(index,excel);
 
   // تحديد فترة التحليل تلقائياً
-  const now=new Date();
-  const analysisYear=now.getFullYear();
-  const analysisMonth=now.getMonth()+1;
-  const periodLabel=`${analysisYear}-${String(analysisMonth).padStart(2,"0")}`;
+  const now = new Date();
 
+const defaultPeriod =
+  `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+const periodInput = prompt(
+  "أدخل فترة التحليل بصيغة YYYY-MM\nمثال: 2026-09",
+  defaultPeriod
+);
+
+if (periodInput === null) {
+  return;
+}
+
+const periodLabel = periodInput.trim();
+
+if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodLabel)) {
+  alert("صيغة الفترة غير صحيحة. استخدم مثلاً: 2026-09");
+  return;
+}
+
+const [analysisYearText, analysisMonthText] = periodLabel.split("-");
+const analysisYear = Number(analysisYearText);
+const analysisMonth = Number(analysisMonthText);
+// اسم تلقائي للملف عند عدم وجود اسم
+const automaticFileName = `تحليل_${periodLabel}.xlsx`;
+
+const safeFileName =
+  excel.fileName && String(excel.fileName).trim()
+    ? excel.fileName
+    : automaticFileName;
   // حفظ تحليل جديد مستقل وعدم الكتابة فوق التحليلات السابقة
   const {data,error}=await db.from("indicator_analyses").insert({
     school_id:state.schoolId,
     indicator_index:index,
-    file_name:excel.fileName||"",
+    file_name:safeFileName,
     analysis_data:result.data,
     analysis_html:result.html,
     analysis_year:analysisYear,
@@ -209,23 +235,62 @@
     if (!data || data.length === 0) {
       list.innerHTML = "<p>لا توجد تحليلات سابقة لهذا المؤشر.</p>";
     } else {
-      list.innerHTML = data.map((row, i) => `
-        <div style="padding:10px;border:1px solid #ddd;border-radius:8px;margin:8px 0;">
-          <strong>${row.period_label || "بدون فترة"}</strong>
-          <span> — ${row.file_name || "بدون اسم ملف"}</span>
+   list.innerHTML = data.map((row, i) => `
+  <div style="padding:10px;border:1px solid #ddd;border-radius:8px;margin:8px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
 
-          <button
-            class="btn secondary"
-            onclick="openHistoryAnalysis(${index}, ${i})">
-            عرض التحليل
-          </button>
-        </div>
-      `).join("");
+   ${row.period_label ? `
+  <input
+    type="checkbox"
+    class="analysis-period-check"
+    value="${i}"
+    data-period="${row.period_label}"
+    style="width:18px;height:18px;"
+    title="اختيار هذه الفترة للمقارنة"
+  >
+` : `
+  <span
+    style="font-size:12px;color:#888;margin-left:8px;"
+    title="هذا تحليل قديم لم يتم تسجيل فترة زمنية له">
+    غير متاح للمقارنة
+  </span>
+`}
+
+    <strong>${row.period_label || "بدون فترة"}</strong>
+
+    <span> - ${row.file_name || "بدون اسم ملف"}</span>
+
+    <button
+      class="btn secondary"
+      onclick="openHistoryAnalysis(${index}, ${i})">
+      عرض التحليل
+    </button>
+
+  </div>
+`).join("");   
     }
   }
+const compareBtn = document.createElement("button");
+compareBtn.className = "btn secondary";
+compareBtn.style.margin = "12px 0";
+compareBtn.textContent = "📊 مقارنة الفترات المحددة";
+compareBtn.onclick = () => {
+  const selected = [
+    ...document.querySelectorAll(".analysis-period-check:checked")
+  ];
 
+  const periods = selected.map(item => item.dataset.period);
+
+  window.compareSelectedPeriods(periods);
+};
+
+list.appendChild(compareBtn);
   window.analysisHistoryData = data || [];
+const monthlyRows = (data || []).filter(row => row.period_label);
 
+window.analysisMonthsData = monthlyRows.filter(
+  (row, i, arr) =>
+    i === arr.findIndex(x => x.period_label === row.period_label)
+);
   return data || [];
 }
 
@@ -252,6 +317,203 @@ window.openHistoryAnalysis = function(index, i){
   $("analysisModal").classList.remove("hidden");
   $("analysisModal").setAttribute("aria-hidden", "false");
 }
+window.compareAllMonths = function () {
+  const rows = window.analysisMonthsData || [];
+const uniquePeriods = [...new Set(
+  rows
+    .map(row => row.period_label)
+    .filter(Boolean)
+)];
+
+if (uniquePeriods.length < 2) {
+  alert("الفترات المختارة تحمل نفس الشهر. اختر فترتين مختلفتين للمقارنة.");
+  return;
+}
+  if (rows.length < 2) {
+    alert("يجب وجود تحليلين لشهرين مختلفين على الأقل لإجراء المقارنة");
+    return;
+  }
+
+  // الاحتفاظ بتحليل واحد فقط لكل فترة
+const uniqueRows = Array.from(
+  new Map(
+    rows.map(row => [row.period_label, row])
+  ).values()
+);
+
+// ترتيب الفترات زمنياً
+const sorted = [...uniqueRows].sort((a, b) =>
+  String(a.period_label).localeCompare(String(b.period_label))
+);
+// ===== التنبؤ الذكي للفترة القادمة =====
+const totals = sorted.map(row =>
+  Number(row.analysis_data?.totalRows || 0)
+);
+
+let prediction = null;
+let predictionTrend = "غير متاح";
+let predictionConfidence = "منخفض";
+
+if (totals.length >= 2) {
+  const changes = [];
+
+  for (let i = 1; i < totals.length; i++) {
+    changes.push(totals[i] - totals[i - 1]);
+  }
+
+  const averageChange =
+    changes.reduce((sum, value) => sum + value, 0) /
+    changes.length;
+
+  const lastTotal = totals[totals.length - 1];
+
+  prediction = Math.max(
+    0,
+    Math.round(lastTotal + averageChange)
+  );
+
+  if (averageChange > 0) {
+    predictionTrend = "▲ اتجاه تصاعدي";
+  } else if (averageChange < 0) {
+    predictionTrend = "▼ اتجاه تنازلي";
+  } else {
+    predictionTrend = "● اتجاه مستقر";
+  }
+
+  if (totals.length >= 6) {
+    predictionConfidence = "مرتفع";
+  } else if (totals.length >= 3) {
+    predictionConfidence = "متوسط";
+  }
+}
+  const comparisonRows = sorted.map((row, i) => {
+    const current = row.analysis_data || {};
+    const previous = i > 0 ? (sorted[i - 1].analysis_data || {}) : null;
+
+    const total = Number(current.totalRows || 0);
+    const previousTotal = previous
+      ? Number(previous.totalRows || 0)
+      : null;
+
+    let changeText = "—";
+
+    if (previousTotal !== null) {
+  const difference = total - previousTotal;
+
+  let percentText = "";
+
+  if (previousTotal !== 0) {
+    const percent = Math.abs(
+      (difference / previousTotal) * 100
+    ).toFixed(1);
+
+    percentText = ` (${percent}%)`;
+  }
+
+  if (difference > 0) {
+    changeText = `▲ زيادة ${difference}${percentText}`;
+  } else if (difference < 0) {
+    changeText = `▼ انخفاض ${Math.abs(difference)}${percentText}`;
+  } else {
+    changeText = "● بدون تغيير (0%)";
+  }
+}
+
+    return `
+      <tr>
+        <td>${row.period_label || "—"}</td>
+        <td>${total}</td>
+        <td>${current.totalColumns || 0}</td>
+        <td>${changeText}</td>
+      </tr>
+    `;
+  }).join("");
+
+  $("modalTitle").textContent = "📊 مقارنة التحليلات الشهرية";
+
+  $("modalMeta").textContent =
+    `عدد الأشهر المقارنة: ${sorted.length}`;
+
+  $("modalAnalysisContent").innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;text-align:center">
+        <thead>
+          <tr>
+            <th style="padding:10px;border:1px solid #ddd">الفترة</th>
+            <th style="padding:10px;border:1px solid #ddd">إجمالي السجلات</th>
+            <th style="padding:10px;border:1px solid #ddd">عدد الأعمدة</th>
+            <th style="padding:10px;border:1px solid #ddd">التغير عن الفترة السابقة</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${comparisonRows}
+        </tbody>
+      </table>
+      <div style="margin-top:20px;padding:16px;border:1px solid #ddd;border-radius:10px;text-align:right;">
+  <h3>🔮 التنبؤ للفترة القادمة</h3>
+
+  ${
+    prediction !== null
+      ? `
+        <p><strong>القيمة المتوقعة:</strong> ${prediction}</p>
+        <p><strong>الاتجاه المتوقع:</strong> ${predictionTrend}</p>
+        <p><strong>مستوى الثقة:</strong> ${predictionConfidence}</p>
+
+        <h3>💡 المقترحات العلمية</h3>
+
+        ${
+          predictionTrend.includes("تصاعدي")
+            ? `
+              <p>• دراسة أسباب الارتفاع وتحديد العوامل الأكثر تأثيرًا.</p>
+              <p>• تطبيق تدخلات وقائية مبكرة للفئات الأكثر تأثرًا.</p>
+              <p>• متابعة المؤشر دوريًا وقياس أثر التدخلات.</p>
+            `
+            : predictionTrend.includes("تنازلي")
+            ? `
+              <p>• المحافظة على الإجراءات التي ساهمت في التحسن.</p>
+              <p>• تحليل العوامل المرتبطة بالانخفاض للاستفادة منها.</p>
+              <p>• استمرار المتابعة للتأكد من استدامة الاتجاه الإيجابي.</p>
+            `
+            : `
+              <p>• استمرار متابعة المؤشر خلال الفترات القادمة.</p>
+              <p>• تحليل المتغيرات المؤثرة للحفاظ على الاستقرار وتحسين النتائج.</p>
+            `
+        }
+
+        <p style="font-size:13px;margin-top:15px;">
+          ⚠️ التنبؤ تقديري ومبني على الاتجاه التاريخي للبيانات المتاحة،
+          ولا يُعد قرارًا نهائيًا.
+        </p>
+      `
+      : `
+        <p>لا توجد بيانات زمنية كافية لإجراء التنبؤ.</p>
+      `
+  }
+</div>
+    </div>
+  `;
+
+  $("analysisModal").classList.remove("hidden");
+  $("analysisModal").setAttribute("aria-hidden", "false");
+};
+window.compareSelectedPeriods = function(periods) {
+  if (!periods || periods.length < 2) {
+    alert("اختر فترتين على الأقل لإجراء المقارنة");
+    return;
+  }
+
+  const rows = (window.analysisHistoryData || [])
+  
+    .filter(row => periods.includes(row.period_label));
+
+  if (rows.length < 2) {
+    alert("تعذر العثور على بيانات الفترات المحددة");
+    return;
+  }
+
+  window.analysisMonthsData = rows;
+  window.compareAllMonths();
+};
   function closeModal(){$("analysisModal").classList.add("hidden");$("analysisModal").setAttribute("aria-hidden","true");}
   function printModal(){window.print();}
   function downloadModal(){const i=state.modalIndex,row=state.analyses.get(i);if(!row)return;const html=`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تحليل المؤشر ${i+1}</title><style>body{font-family:Tahoma,Arial;padding:30px;direction:rtl}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric,.chart-card{border:1px solid #ddd;border-radius:12px;padding:15px;margin:10px 0}.bar-track{height:16px;background:#eee;border-radius:8px;overflow:hidden}.bar-fill{height:100%;background:#176b5b}</style><body><h1>تقرير التحليل الآلي - المؤشر ${i+1}</h1>${row.analysis_html}</body></html>`;const blob=new Blob([html],{type:"text/html;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`تحليل-المؤشر-${i+1}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
