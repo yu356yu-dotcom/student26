@@ -118,7 +118,20 @@
   async function uploadFiles(index, files){
     if(!files?.length) return;
     for(const file of files){
-      if(/\.(xlsx?|csv)$/i.test(file.name)){ await readExcel(index,file); continue; }
+      const fileName = file.name.toLowerCase();
+
+if (
+  fileName.endsWith(".xlsx") ||
+  fileName.endsWith(".xls")
+) {
+  await readExcel(index, file);
+  continue;
+}
+
+if (fileName.endsWith(".pdf")) {
+  await readPdf(index, file);
+  continue;
+} 
       const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_"); const path=`${state.schoolId}/${index}/${Date.now()}_${safe}`;
       const {error:upErr}=await db.storage.from(cfg.storageBucket).upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
       if(upErr){alert(`تعذر رفع ${file.name}: ${upErr.message}`);continue;}
@@ -127,6 +140,59 @@
     }
     await refreshAll();
   }
+async function readPdf(index, file) {
+  try {
+    if (typeof pdfjsLib === "undefined") {
+      throw new Error("مكتبة PDF.js غير محملة");
+    }
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const buffer = await file.arrayBuffer();
+
+    const pdf = await pdfjsLib.getDocument({
+      data: new Uint8Array(buffer)
+    }).promise;
+
+    let fullText = "";
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+
+      const pageText = content.items
+        .map(item => item.str)
+        .join(" ");
+
+      fullText += pageText + "\n";
+    }
+
+    fullText = fullText.trim();
+
+    if (!fullText) {
+      alert(
+        "تم فتح ملف PDF ولكن لم يتم العثور على نص قابل للقراءة. قد يكون الملف عبارة عن صور ممسوحة ضوئياً."
+      );
+      return;
+    }
+
+    const wordCount = fullText
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+    alert(
+      "تمت قراءة ملف PDF بنجاح ✅\n\n" +
+      "اسم الملف: " + file.name + "\n" +
+      "عدد الصفحات: " + pdf.numPages + "\n" +
+      "عدد الكلمات تقريباً: " + wordCount
+    );
+
+  } catch (e) {
+    console.error("PDF error:", e);
+    alert("تعذر قراءة ملف PDF: " + e.message);
+  }
+}
 
   async function readExcel(index,file){
     try{
