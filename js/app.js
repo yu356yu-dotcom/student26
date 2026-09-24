@@ -203,17 +203,313 @@ async function readPdf(index, file) {
     }catch(e){alert("تعذر قراءة ملف Excel: "+e.message);}
   }
 
-  function buildAnalysis(index,excel){
-    const rows=excel.rows.filter(r=>r?.some(c=>String(c??"").trim()!=="")), headers=excel.headers||[], totalRows=rows.length, totalColumns=headers.length;
-    const preferred=["شعبة","الشعبة","صف","الصف","مرحلة","المرحلة","حالة","الحالة","نوع","التصنيف","غياب","حضور"];
-    const stats=headers.map((h,colIndex)=>{const values=rows.map(r=>String(r[colIndex]??"").trim()).filter(Boolean),counts={};values.forEach(v=>counts[v]=(counts[v]||0)+1);return{header:String(h||`عمود ${colIndex+1}`),counts,uniqueCount:Object.keys(counts).length};});
-    const cats=stats.filter(c=>c.uniqueCount>=2&&c.uniqueCount<=15).sort((a,b)=>Number(preferred.some(w=>b.header.includes(w)))-Number(preferred.some(w=>a.header.includes(w)))).slice(0,3);
-    const insights=[]; cats.forEach(c=>{const e=Object.entries(c.counts).sort((a,b)=>b[1]-a[1]);if(e.length)insights.push(`أعلى قيمة في ${c.header}: ${e[0][0]} بعدد ${e[0][1]} سجل`);});
-    if(!insights.length) insights.push("تمت قراءة البيانات بنجاح، ولم يتم العثور على عمود تصنيفي مناسب للرسم.");
-    const charts=cats.map(c=>{const entries=Object.entries(c.counts).sort((a,b)=>b[1]-a[1]).slice(0,10),max=Math.max(...entries.map(e=>e[1]),1);return `<div class="chart-card"><h3>تحليل ${esc(c.header)}</h3>${entries.map(([name,count])=>`<div class="bar-row"><div class="bar-label"><strong>${esc(name)}</strong><span>${count} (${totalRows?((count/totalRows)*100).toFixed(1):0}%)</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%"></div></div></div>`).join("")}</div>`;}).join("");
-    const html=`<div class="analysis-sheet"><div class="metric-grid"><div class="metric"><strong>${totalRows}</strong>إجمالي السجلات</div><div class="metric"><strong>${totalColumns}</strong>عدد الأعمدة</div><div class="metric"><strong>${cats.length}</strong>محاور التحليل</div><div class="metric"><strong style="font-size:18px">${esc(excel.sheetName||'-')}</strong>ورقة البيانات</div></div>${charts}<div class="chart-card"><h3>أبرز النتائج والتوصيات</h3><ul class="insights">${insights.map(x=>`<li>${esc(x)}</li>`).join("")}<li>يوصى بمتابعة القيم الأعلى ومقارنتها دوريًا مع التحديث القادم للبيانات.</li></ul></div><p style="text-align:center;color:#667085;font-size:13px">تم إنشاء التحليل تلقائيًا • ${new Date().toLocaleString("ar-SA")}</p></div>`;
-    return {html,data:{totalRows,totalColumns,insights}};
+  function buildAnalysis(index, excel) {
+  const headers = excel.headers || [];
+
+  // تنظيف الصفوف واستبعاد الصفوف الفارغة
+  const rows = (excel.rows || []).filter(row =>
+    row?.some(cell => String(cell ?? "").trim() !== "")
+  );
+
+  const totalRows = rows.length;
+  const totalColumns = headers.length;
+
+  // كلمات تساعد على إعطاء الأولوية للأعمدة المهمة تربويًا
+  const preferred = [
+    "الصف",
+    "الشعبة",
+    "الحالة",
+    "نوع",
+    "التصنيف",
+    "المرحلة",
+    "الجنس",
+    "غياب",
+    "سلوك",
+    "تحصيل",
+    "درجة",
+    "نتيجة"
+  ];
+
+  // تحليل كل عمود
+  const stats = headers.map((header, colIndex) => {
+    const values = rows.map(row =>
+      String(row[colIndex] ?? "").trim()
+    );
+
+    const nonEmpty = values.filter(Boolean);
+    const missing = totalRows - nonEmpty.length;
+
+    const counts = {};
+
+    nonEmpty.forEach(value => {
+      counts[value] = (counts[value] || 0) + 1;
+    });
+
+    const uniqueCount = Object.keys(counts).length;
+
+    const numericValues = nonEmpty
+      .map(value => Number(
+        String(value).replace(/,/g, "").replace("%", "")
+      ))
+      .filter(value => Number.isFinite(value));
+
+    let numeric = null;
+
+    if (
+      numericValues.length >= Math.max(
+        2,
+        Math.round(nonEmpty.length * 0.7)
+      )
+    ) {
+      const sum = numericValues.reduce((a, b) => a + b, 0);
+
+      numeric = {
+        count: numericValues.length,
+        average: numericValues.length
+          ? sum / numericValues.length
+          : 0,
+        min: numericValues.length
+          ? Math.min(...numericValues)
+          : 0,
+        max: numericValues.length
+          ? Math.max(...numericValues)
+          : 0
+      };
+    }
+
+    return {
+      header: String(header || `عمود ${colIndex + 1}`),
+      counts,
+      uniqueCount,
+      missing,
+      numeric
+    };
+  });
+
+  // حساب جودة البيانات
+  const totalCells = totalRows * totalColumns;
+
+  const missingCells = stats.reduce(
+    (sum, item) => sum + item.missing,
+    0
+  );
+
+  const completeness = totalCells
+    ? ((totalCells - missingCells) / totalCells) * 100
+    : 0;
+
+  // اكتشاف الصفوف المكررة
+  const rowKeys = rows.map(row =>
+    JSON.stringify(
+      headers.map((_, i) =>
+        String(row[i] ?? "").trim()
+      )
+    )
+  );
+
+  const duplicateRows =
+    rowKeys.length - new Set(rowKeys).size;
+
+  // اختيار أفضل الأعمدة التصنيفية للرسم
+  const categories = stats
+    .filter(item =>
+      item.uniqueCount >= 2 &&
+      item.uniqueCount <= 20
+    )
+    .sort((a, b) => {
+      const aPreferred = preferred.some(word =>
+        a.header.includes(word)
+      );
+
+      const bPreferred = preferred.some(word =>
+        b.header.includes(word)
+      );
+
+      return Number(bPreferred) - Number(aPreferred);
+    })
+    .slice(0, 4);
+
+  // إنشاء الاستنتاجات
+  const insights = [];
+
+  categories.forEach(category => {
+    const entries = Object.entries(category.counts)
+      .sort((a, b) => b[1] - a[1]);
+
+    if (!entries.length) return;
+
+    const [topName, topCount] = entries[0];
+
+    const percent = totalRows
+      ? ((topCount / totalRows) * 100).toFixed(1)
+      : "0.0";
+
+    insights.push(
+      `${category.header}: الأعلى "${topName}" بعدد ${topCount} (${percent}%).`
+    );
+  });
+
+  if (missingCells > 0) {
+    insights.push(
+      `يوجد ${missingCells} حقلًا فارغًا في البيانات، ونسبة اكتمال البيانات ${completeness.toFixed(1)}%.`
+    );
+  } else {
+    insights.push(
+      "لا توجد قيم مفقودة في البيانات المحللة."
+    );
   }
+
+  if (duplicateRows > 0) {
+    insights.push(
+      `تم اكتشاف ${duplicateRows} صفًا مكررًا ويُنصح بمراجعته قبل اعتماد النتائج النهائية.`
+    );
+  }
+
+  const numericStats = stats
+    .filter(item => item.numeric)
+    .slice(0, 4);
+
+  numericStats.forEach(item => {
+    insights.push(
+      `${item.header}: المتوسط ${item.numeric.average.toFixed(1)}، الأدنى ${item.numeric.min}، الأعلى ${item.numeric.max}.`
+    );
+  });
+
+  // الرسوم البيانية
+  const charts = categories.map(category => {
+    const entries = Object.entries(category.counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const max = Math.max(
+      1,
+      ...entries.map(entry => entry[1])
+    );
+
+    const bars = entries.map(([name, count]) => {
+      const percent = totalRows
+        ? ((count / totalRows) * 100).toFixed(1)
+        : "0.0";
+
+      const width = Math.max(
+        3,
+        Math.round((count / max) * 100)
+      );
+
+      return `
+        <div class="bar-row">
+          <div class="bar-label">
+            <strong>${esc(name)}</strong>
+            <span>${count} (${percent}%)</span>
+          </div>
+
+          <div class="bar-track">
+            <div
+              class="bar-fill"
+              style="width:${width}%"
+            ></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="chart-card">
+        <h3>📊 ${esc(category.header)}</h3>
+        ${bars}
+      </div>
+    `;
+  }).join("");
+
+  const qualityText =
+    completeness >= 95
+      ? "ممتازة"
+      : completeness >= 85
+        ? "جيدة جدًا"
+        : completeness >= 70
+          ? "جيدة"
+          : "تحتاج مراجعة";
+
+  const html = `
+    <div class="analysis-sheet">
+
+      <div class="metric-grid">
+
+        <div class="metric">
+          <strong>${totalRows}</strong>
+          إجمالي السجلات
+        </div>
+
+        <div class="metric">
+          <strong>${totalColumns}</strong>
+          عدد الأعمدة
+        </div>
+
+        <div class="metric">
+          <strong>${completeness.toFixed(1)}%</strong>
+          اكتمال البيانات
+        </div>
+
+        <div class="metric">
+          <strong>${duplicateRows}</strong>
+          الصفوف المكررة
+        </div>
+
+        <div class="metric">
+          <strong>${categories.length}</strong>
+          محاور التحليل
+        </div>
+
+        <div class="metric">
+          <strong>${qualityText}</strong>
+          جودة البيانات
+        </div>
+
+      </div>
+
+      ${charts || `
+        <div class="chart-card">
+          لا توجد أعمدة تصنيفية مناسبة لإنشاء رسم بياني.
+        </div>
+      `}
+
+      <div class="chart-card">
+        <h3>🔎 أبرز النتائج والتوصيات</h3>
+
+        <ul class="insights">
+          ${insights.map(item =>
+            `<li>${esc(item)}</li>`
+          ).join("")}
+        </ul>
+      </div>
+
+      <div
+        style="
+          text-align:center;
+          color:#667085;
+          font-size:13px;
+          margin-top:15px;
+        "
+      >
+        تم إنشاء التحليل آليًا •
+        ${new Date().toLocaleString("ar-SA")}
+      </div>
+
+    </div>
+  `;
+
+  return {
+    html,
+    data: {
+      totalRows,
+      totalColumns,
+      completeness: Number(completeness.toFixed(1)),
+      missingCells,
+      duplicateRows,
+      insights
+    }
+  };
+}
 
   async function analyze(index){
   const excel=state.excel.get(index);
