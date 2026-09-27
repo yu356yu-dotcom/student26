@@ -23,9 +23,10 @@
   const fmt = d => d ? new Date(d).toLocaleString("ar-SA") : "—";
 
   async function getMembership(){
-    const {data,error}=await db.from("school_memberships").select("school_id").eq("user_id",state.session.user.id).single();
+    const {data,error}=await db.from("school_memberships").select("school_id, role").eq("user_id",state.session.user.id).single();
     if(error || !data) throw new Error("تعذر تحديد المدرسة المرتبطة بالحساب");
-    state.schoolId=data.school_id;
+    state.schoolId=data.school_id; 
+    state.role = data.role;
   }
 
   async function login(){
@@ -56,6 +57,7 @@
         <div class="indicator-body ${open?'':'hidden'}" id="body-${item.index}">
           <textarea class="report-text" data-report="${item.index}">${esc(local)}</textarea>
           <div class="actions">
+          <button class="btn secondary" data-rename="${item.index}">✏️ تعديل اسم المؤشر</button>
             <button class="btn primary" data-upload="${item.index}">＋ إضافة ملفات</button>
             <button class="btn secondary" data-excel="${item.index}">📊 ربط Excel وتحليل</button>
             ${saved?`<button class="btn secondary" data-view="${item.index}">عرض آخر تحليل</button>`:''}
@@ -312,22 +314,44 @@ async function readPdf(index, file) {
 
   // اختيار أفضل الأعمدة التصنيفية للرسم
   const categories = stats
-    .filter(item =>
-      item.uniqueCount >= 2 &&
-      item.uniqueCount <= 20
-    )
-    .sort((a, b) => {
-      const aPreferred = preferred.some(word =>
-        a.header.includes(word)
-      );
+  .filter(item => {
+    const isClassColumn =
+      item.header.includes("الشعبة") ||
+      item.header.includes("رقم الشعبة") ||
+      item.header.includes("الفصل");
 
-      const bPreferred = preferred.some(word =>
-        b.header.includes(word)
-      );
+    return (
+      isClassColumn ||
+      (
+        item.uniqueCount >= 2 &&
+        item.uniqueCount <= 20
+      )
+    );
+  })
+  .sort((a, b) => {
+    const aClass =
+      a.header.includes("الشعبة") ||
+      a.header.includes("رقم الشعبة");
 
-      return Number(bPreferred) - Number(aPreferred);
-    })
-    .slice(0, 4);
+    const bClass =
+      b.header.includes("الشعبة") ||
+      b.header.includes("رقم الشعبة");
+
+    if (aClass && !bClass) return -1;
+    if (!aClass && bClass) return 1;
+
+    const aPreferred = preferred.some(word =>
+      a.header.includes(word)
+    );
+
+    const bPreferred = preferred.some(word =>
+      b.header.includes(word)
+    );
+
+    return Number(bPreferred) - Number(aPreferred);
+  })
+  .slice(0, 4);
+
 
   // إنشاء الاستنتاجات
   const insights = [];
@@ -365,16 +389,82 @@ async function readPdf(index, file) {
     );
   }
 
-  const numericStats = stats
-    .filter(item => item.numeric)
-    .slice(0, 4);
+  // استبعاد الأعمدة التعريفية من التحليل الإحصائي
+const identifierKeywords = [
+  "id",
+  "student id",
+  "student_id",
+  "رقم الشعبة",
+  "رقم الهوية",
+  "الهوية",
+  "هوية",
+  "رقم الطالب",
+  "رقم الجوال",
+  "الجوال",
+  "جوال",
+  "mobile",
+  "phone",
+  "telephone",
+  "contact",
+"طابع زمني"
+];
+const classNumberStat = stats.find(item =>
+  item.header.includes("رقم الشعبة") ||
+  item.header.includes("الشعبة")
+);
 
-  numericStats.forEach(item => {
-    insights.push(
-      `${item.header}: المتوسط ${item.numeric.average.toFixed(1)}، الأدنى ${item.numeric.min}، الأعلى ${item.numeric.max}.`
+if (classNumberStat && classNumberStat.numeric) {
+  insights.push(
+    `رقم الشعبة: الأدنى ${classNumberStat.numeric.min}، الأعلى ${classNumberStat.numeric.max}.`
+  );
+}
+
+const numericStats = stats
+  .filter(item => {
+    if (!item.numeric) return false;
+
+    const header = String(item.header || "")
+      .trim()
+      .toLowerCase();
+
+    const isIdentifier = identifierKeywords.some(keyword =>
+      header.includes(keyword.toLowerCase())
     );
-  });
 
+    return !isIdentifier;
+  })
+  .slice(0, 4);
+
+numericStats.forEach(item => {
+  insights.push(
+    `${item.header}: المتوسط ${item.numeric.average.toFixed(1)}، الأدنى ${item.numeric.min}، الأعلى ${item.numeric.max}.`
+  );
+});
+// قياس الأثر
+const impactMeasurement = {
+  completeness: Number(completeness.toFixed(1)),
+  missingCells,
+  duplicateRows,
+  totalRows,
+  status: ""
+};
+
+if (completeness >= 95 && duplicateRows === 0) {
+  impactMeasurement.status = "أثر مرتفع وجودة بيانات ممتازة";
+} else if (completeness >= 85) {
+  impactMeasurement.status = "أثر جيد مع فرص للتحسين";
+} else if (completeness >= 70) {
+  impactMeasurement.status = "أثر متوسط ويحتاج إلى متابعة";
+} else {
+  impactMeasurement.status = "الأثر يحتاج إلى تدخل وتحسين جودة البيانات";
+}
+
+insights.push(
+  `قياس الأثر: نسبة اكتمال البيانات ${impactMeasurement.completeness}%، ` +
+  `وعدد السجلات ${impactMeasurement.totalRows}، ` +
+  `والسجلات المكررة ${impactMeasurement.duplicateRows}. ` +
+  `التقييم: ${impactMeasurement.status}.`
+);
   // الرسوم البيانية
   const charts = categories.map(category => {
     const entries = Object.entries(category.counts)
@@ -482,7 +572,31 @@ async function readPdf(index, file) {
           ).join("")}
         </ul>
       </div>
+<div class="chart-card">
+  <h3>📈 قياس الأثر</h3>
 
+  <div class="metric-grid">
+    <div class="metric-card">
+      <strong>${impactMeasurement.completeness}%</strong>
+      <span>اكتمال البيانات</span>
+    </div>
+
+    <div class="metric-card">
+      <strong>${impactMeasurement.totalRows}</strong>
+      <span>السجلات المقاسة</span>
+    </div>
+
+    <div class="metric-card">
+      <strong>${impactMeasurement.duplicateRows}</strong>
+      <span>السجلات المكررة</span>
+    </div>
+  </div>
+
+  <p style="margin-top:12px;">
+    <strong>تقييم الأثر:</strong>
+    ${esc(impactMeasurement.status)}
+  </p>
+</div>
       <div
         style="
           text-align:center;
@@ -882,10 +996,95 @@ window.compareSelectedPeriods = function(periods) {
 
   async function deleteFile(index,id,path){if(!confirm("هل تريد حذف هذا الملف؟"))return;const {error:sErr}=await db.storage.from(cfg.storageBucket).remove([path]);if(sErr){alert("تعذر حذف الملف: "+sErr.message);return;}const {error}=await db.from("indicator_attachments").delete().eq("id",id).eq("school_id",state.schoolId);if(error){alert("تعذر حذف بيانات الملف: "+error.message);return;}await refreshAll();}
   function printIndicator(index){state.open.add(index);renderIndicators();setTimeout(()=>window.print(),50);}
+async function renameIndicatorInDatabase(index, newTitle, applyToAllSchools = false) {
+  try {
+    const item = indicators.find(x => x.index === index);
 
-  document.addEventListener("click",e=>{
-    const t=e.target.closest("[data-toggle],[data-upload],[data-excel],[data-view],[data-print],[data-delete-id]"); if(!t)return;
-    if(t.dataset.toggle!==undefined){const i=Number(t.dataset.toggle);state.open.has(i)?state.open.delete(i):state.open.add(i);renderIndicators();}
+    if (!item) {
+      throw new Error("لم يتم العثور على المؤشر");
+    }
+
+    let query = db
+      .from("school_indicators")
+      .update({ title: newTitle });
+
+    if (!applyToAllSchools) {
+      query = query
+        .eq("school_id", state.schoolId)
+        .eq("sort_order", index);
+    } else {
+      query = query.eq("sort_order", index);
+    }
+
+    const { error } = await query;
+
+    if (error) throw error;
+
+    return true;
+
+  } catch (error) {
+    console.error("Rename indicator error:", error);
+    alert("تعذر حفظ اسم المؤشر: " + error.message);
+    return false;
+  }
+}
+  document.addEventListener("click", async e => {
+    const t=e.target.closest("[data-toggle],[data-rename],[data-upload],[data-excel],[data-view],[data-print],[data-delete-id]"); if(!t)return;
+   if (t.dataset.rename !== undefined) {
+  const index = Number(t.dataset.rename);
+  const item = indicators.find(x => x.index === index);
+
+  if (!item) return;
+if (!["super_admin", "school_admin", "counselor"].includes(state.role)) {
+  alert("ليس لديك صلاحية تعديل المؤشرات");
+  return;
+}
+  const newName = prompt("اكتب اسم المؤشر الجديد:", item.title);
+
+  if (newName === null) return;
+
+  const cleanName = newName.trim();
+
+  if (!cleanName) {
+    alert("اسم المؤشر لا يمكن أن يكون فارغًا");
+    return;
+  }
+let applyToAllSchools = false;
+
+if (state.role === "super_admin") {
+  const scope = prompt(
+    "اختر نطاق التعديل:\n\n1 = هذه المدرسة فقط\n2 = جميع المدارس",
+    "1"
+  );
+
+  if (scope === null) return;
+
+  if (scope === "2") {
+    applyToAllSchools = true;
+  } else if (scope !== "1") {
+    alert("الاختيار غير صحيح. اختر 1 أو 2");
+    return;
+  }
+}
+ const saved = await renameIndicatorInDatabase(
+  index,
+  cleanName,
+  applyToAllSchools
+);
+
+if (!saved) return;
+
+item.title = cleanName;
+renderIndicators();
+
+alert(
+  applyToAllSchools
+    ? "تم تغيير اسم المؤشر لجميع المدارس بنجاح ✅"
+    : "تم تغيير اسم المؤشر لهذه المدرسة بنجاح ✅"
+);
+
+return;
+} if(t.dataset.toggle!==undefined){const i=Number(t.dataset.toggle);state.open.has(i)?state.open.delete(i):state.open.add(i);renderIndicators();}
     else if(t.dataset.upload!==undefined) $("upload-"+t.dataset.upload).click();
     else if(t.dataset.excel!==undefined) $("excel-"+t.dataset.excel).click();
     else if(t.dataset.view!==undefined){const i=Number(t.dataset.view);showAnalysis(i,state.analyses.get(i));}
