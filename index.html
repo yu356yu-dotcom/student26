@@ -47,6 +47,30 @@
     </section>
 
     <section id="indicatorsContainer" class="container"></section>
+  <section id="programReportsSection" class="container">
+  <h2>📋 تقارير برامج التوجيه والإرشاد</h2>
+
+  <div class="program-report-toolbar">
+    <label for="programSelect">اختر البرنامج:</label>
+
+    <select id="programSelect">
+      <option value="">-- اختر أحد البرامج --</option>
+    </select>
+<label for="reportTemplateSelect">اختر قالب التقرير:</label>
+
+<select id="reportTemplateSelect">
+  <option value="official">🏛️ القالب الرسمي الوزاري</option>
+  <option value="modern">✨ القالب الحديث الاحترافي</option>
+  <option value="visual">🖼️ القالب البصري بالصور</option>
+  <option value="executive">📄 القالب المختصر التنفيذي</option>
+  <option value="analytics">📊 القالب التحليلي بالمؤشرات</option>
+  <option value="circular">⭕ القالب الأسطواني / الدائري</option>
+</select>
+    <button id="openProgramReportBtn" type="button">
+      إنشاء التقرير
+    </button>
+  </div>
+</section>
   </main>
 
   <div id="analysisModal" class="modal hidden" aria-hidden="true">

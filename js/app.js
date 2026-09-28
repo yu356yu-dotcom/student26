@@ -17,7 +17,157 @@
     ["تنمي المدرسة المهارات العاطفية والاجتماعية لدى المتعلمين","عملت المدرسة على تنمية المهارات العاطفية والاجتماعية لدى الطلاب من خلال البرامج الإرشادية التي تتناول مهارات التواصل والثقة بالنفس وحل المشكلات وإدارة الانفعالات والعمل الجماعي."],
     ["يظهر المتعلمون اتجاهات إيجابية نحو ذواتهم","قدمت المدرسة برامج إرشادية وتحفيزية تساعد الطلاب على تكوين اتجاهات إيجابية نحو ذواتهم وتعزيز الثقة بالنفس والطموح والتخطيط للمستقبل."]
   ].map((x,i)=>({index:i,title:x[0],report:x[1]}));
+const reportTemplates = {
+  "التهيئة الإرشادية": {
+    description: "برنامج إرشادي يهدف إلى تهيئة الطلاب للبيئة المدرسية وتعريفهم بالأنظمة والخدمات والبرامج المقدمة لهم.",
+    goals: [
+      "تهيئة الطلاب نفسيًا وتربويًا للعام الدراسي.",
+      "تعريف الطلاب بالأنظمة والتعليمات المدرسية.",
+      "تعزيز الشعور بالأمان والانتماء للمدرسة.",
+      "تعريف الطلاب بخدمات التوجيه والإرشاد."
+    ],
+    target: "طلاب المرحلة الثانوية، مع التركيز على الطلاب المستجدين.",
+    implementation: "تنفيذ لقاءات تعريفية وبرامج توعوية وأنشطة إرشادية وتعريف الطلاب بالمرافق والخدمات والأنظمة المدرسية.",
+    indicators: "مشاركة الطلاب في البرنامج، مستوى التفاعل، ومدى معرفة الطلاب بالأنظمة والخدمات المدرسية.",
+    results: "تحسين تكيف الطلاب مع البيئة المدرسية وتعزيز شعورهم بالأمان والانتماء.",
+    recommendations: "استمرار برامج التهيئة ومتابعة الطلاب الذين يحتاجون إلى دعم إضافي."
+  },
 
+  "تعزيز الانضباط المدرسي والمواظبة": {
+    description: "برنامج يهدف إلى تعزيز الانضباط والمواظبة والحد من الغياب والتأخر لدى الطلاب.",
+    goals: [
+      "رفع مستوى الانضباط المدرسي.",
+      "الحد من الغياب والتأخر.",
+      "تعزيز المسؤولية لدى الطلاب.",
+      "متابعة حالات الغياب المتكرر."
+    ],
+    target: "جميع طلاب المرحلة الثانوية.",
+    implementation: "متابعة الحضور والغياب وتنفيذ برامج توعوية وتحفيزية والتواصل مع الطلاب وأولياء الأمور عند الحاجة.",
+    indicators: "نسب الحضور والغياب والتأخر والحالات المتكررة ومستوى التحسن.",
+    results: "رفع مستوى الوعي بأهمية الانضباط وتحسين مستوى المواظبة.",
+    recommendations: "استمرار المتابعة المبكرة للحالات المتكررة وتعزيز البرامج التحفيزية."
+  },
+
+  "تعزيز الدافعية للتعلم والتحصيل الدراسي": {
+    description: "برنامج يهدف إلى رفع دافعية الطلاب للتعلم وتحسين مستوى التحصيل الدراسي.",
+    goals: [
+      "رفع الدافعية نحو التعلم.",
+      "تحسين مستوى التحصيل الدراسي.",
+      "متابعة الطلاب منخفضي التحصيل.",
+      "تعزيز مهارات تنظيم الوقت والاستذكار."
+    ],
+    target: "طلاب المرحلة الثانوية، وخاصة الطلاب الذين يحتاجون إلى دعم دراسي.",
+    implementation: "تنفيذ لقاءات إرشادية ومتابعة نتائج الطلاب وتحديد جوانب الضعف ووضع خطط متابعة وتحفيز.",
+    indicators: "مستوى التحسن الدراسي، نتائج الطلاب، وعدد الحالات التي تمت متابعتها.",
+    results: "تحسن الدافعية للتعلم ورفع مستوى التحصيل لدى الطلاب المستهدفين.",
+    recommendations: "استمرار متابعة التحصيل وتقديم التدخل الإرشادي المبكر للطلاب المتعثرين."
+  },
+
+  "تعزيز القيم والسلوك الإيجابي": {
+    description: "برنامج تربوي يهدف إلى تعزيز القيم الإسلامية والوطنية والسلوكيات الإيجابية لدى الطلاب.",
+    goals: [
+      "تعزيز القيم الإسلامية والوطنية.",
+      "تنمية السلوك الإيجابي.",
+      "تعزيز المسؤولية والاحترام.",
+      "الحد من السلوكيات غير المرغوبة."
+    ],
+    target: "جميع طلاب المرحلة الثانوية.",
+    implementation: "تنفيذ أنشطة وبرامج توعوية ومسابقات ومواقف تربوية تعزز القيم والسلوك الإيجابي.",
+    indicators: "مشاركة الطلاب، السلوكيات الإيجابية المرصودة، ومستوى انخفاض المخالفات.",
+    results: "تعزيز السلوك الإيجابي وتنمية القيم والمسؤولية لدى الطلاب.",
+    recommendations: "استمرار تعزيز السلوكيات الإيجابية وربطها بالمواقف اليومية داخل المدرسة."
+  },
+
+  "التوجيه والإرشاد المهني": {
+    description: "برنامج يساعد طلاب المرحلة الثانوية على التعرف على ميولهم وقدراتهم واتخاذ قرارات تعليمية ومهنية مناسبة.",
+    goals: [
+      "تنمية الوعي المهني.",
+      "التعرف على الميول والقدرات.",
+      "التعريف بالتخصصات الجامعية.",
+      "مساعدة الطلاب على التخطيط لمستقبلهم."
+    ],
+    target: "طلاب المرحلة الثانوية، وخاصة الصفوف القريبة من التخرج.",
+    implementation: "تنفيذ لقاءات مهنية واختبارات ميول واستضافة مختصين والتعريف بالتخصصات والفرص التعليمية والمهنية.",
+    indicators: "عدد المستفيدين، مستوى المشاركة، ومدى وضوح الخيارات التعليمية والمهنية لدى الطلاب.",
+    results: "زيادة وعي الطلاب بالمسارات التعليمية والمهنية ودعم قدرتهم على اتخاذ القرار.",
+    recommendations: "زيادة البرامج المهنية وربط الطلاب بالمصادر والجهات التعليمية والمهنية الموثوقة."
+  },
+
+  "التفوق والتميز الدراسي": {
+    description: "برنامج يهدف إلى رعاية الطلاب المتفوقين وتعزيز استمرار تفوقهم وتحفيزهم على التميز.",
+    goals: [
+      "رعاية الطلاب المتفوقين.",
+      "تحفيز الطلاب على التميز.",
+      "تعزيز المنافسة الإيجابية.",
+      "تقدير الإنجازات الدراسية."
+    ],
+    target: "الطلاب المتفوقون والمتميزون دراسيًا.",
+    implementation: "حصر الطلاب المتفوقين وتكريمهم وتنفيذ برامج تحفيزية ومتابعة استمرار تقدمهم الدراسي.",
+    indicators: "عدد الطلاب المتفوقين، نسب التحصيل، واستمرار مستوى التفوق.",
+    results: "رفع مستوى التحفيز وتعزيز ثقافة التفوق والتميز.",
+    recommendations: "استمرار برامج التكريم والتحفيز وتقديم فرص إثرائية للطلاب المتفوقين."
+  },
+
+  "الدعم النفسي والاجتماعي": {
+    description: "برنامج يهدف إلى تقديم الدعم النفسي والاجتماعي للطلاب وتعزيز التوافق النفسي والاجتماعي داخل البيئة المدرسية.",
+    goals: [
+      "تعزيز الصحة النفسية.",
+      "مساعدة الطلاب في مواجهة المشكلات.",
+      "تنمية مهارات التكيف.",
+      "تقديم الدعم للحالات التي تحتاج إلى متابعة."
+    ],
+    target: "جميع الطلاب، مع التركيز على الحالات التي تحتاج إلى دعم نفسي أو اجتماعي.",
+    implementation: "جلسات إرشادية فردية وجماعية وبرامج توعوية ومتابعة الحالات والتواصل مع الأسرة والجهات المختصة عند الحاجة.",
+    indicators: "عدد الحالات المتابعة، مستوى التحسن، وعدد البرامج والجلسات المنفذة.",
+    results: "تحسين التوافق النفسي والاجتماعي ودعم الطلاب في التعامل مع المشكلات.",
+    recommendations: "استمرار المتابعة والمحافظة على السرية والإحالة للجهات المختصة عندما تتطلب الحالة ذلك."
+  },
+
+  "المهارات الحياتية والشخصية": {
+    description: "برنامج يهدف إلى تنمية المهارات الشخصية والاجتماعية التي تساعد الطالب على التعامل الإيجابي مع المواقف المختلفة.",
+    goals: [
+      "تنمية مهارات اتخاذ القرار.",
+      "تعزيز مهارات حل المشكلات.",
+      "تطوير مهارات التواصل.",
+      "تنمية إدارة الوقت والضغوط."
+    ],
+    target: "جميع طلاب المرحلة الثانوية.",
+    implementation: "ورش عمل وأنشطة تطبيقية ومواقف تدريبية وجلسات إرشادية لتنمية المهارات الحياتية.",
+    indicators: "عدد الأنشطة والمستفيدين ومستوى المشاركة والتطبيق.",
+    results: "تحسن مهارات التواصل واتخاذ القرار وحل المشكلات لدى الطلاب.",
+    recommendations: "زيادة الأنشطة التطبيقية وربط المهارات بالمواقف الدراسية والحياتية."
+  },
+
+  "الشراكة بين الأسرة والمدرسة": {
+    description: "برنامج يهدف إلى تعزيز التواصل والتكامل بين المدرسة والأسرة لدعم الطالب تربويًا ودراسيًا وسلوكيًا.",
+    goals: [
+      "تعزيز التواصل مع أولياء الأمور.",
+      "رفع مستوى مشاركة الأسرة.",
+      "دعم التحصيل والانضباط.",
+      "تحقيق التكامل بين الأسرة والمدرسة."
+    ],
+    target: "أولياء أمور طلاب المرحلة الثانوية والطلاب.",
+    implementation: "عقد اللقاءات وإرسال الرسائل والاستبانات ومناقشة مستوى الطلاب وتقديم التوصيات المناسبة للأسرة.",
+    indicators: "نسبة مشاركة أولياء الأمور، عدد اللقاءات، والاستجابات والمتابعات المنفذة.",
+    results: "تحسين التواصل بين المدرسة والأسرة وتعزيز متابعة الطلاب.",
+    recommendations: "تنويع وسائل التواصل وزيادة مشاركة أولياء الأمور في البرامج المدرسية."
+  },
+
+  "رعاية الحالات الطلابية والفئات ذات الاحتياج": {
+    description: "برنامج يهدف إلى اكتشاف ودراسة ومتابعة الحالات الطلابية التي تحتاج إلى خدمات إرشادية أو تربوية خاصة.",
+    goals: [
+      "الاكتشاف المبكر للحالات.",
+      "دراسة احتياجات الطلاب.",
+      "تقديم التدخل الإرشادي المناسب.",
+      "متابعة تطور الحالة."
+    ],
+    target: "الطلاب الذين تظهر لديهم احتياجات تربوية أو اجتماعية أو دراسية أو سلوكية تستدعي المتابعة.",
+    implementation: "دراسة الحالة ووضع خطة متابعة وتنفيذ التدخلات المناسبة والتواصل مع الأسرة والإحالة للجهات المختصة عند الحاجة.",
+    indicators: "عدد الحالات، نوع التدخل، مستوى المتابعة، ونسبة التحسن.",
+    results: "تحسين متابعة الحالات وتقديم التدخل المناسب وفق احتياجات كل طالب.",
+    recommendations: "استمرار المتابعة وتحديث خطط الحالات والمحافظة على الخصوصية والسرية."
+  }
+};
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? "").replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const fmt = d => d ? new Date(d).toLocaleString("ar-SA") : "—";
@@ -43,10 +193,333 @@
       await getMembership();
       $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden");
       renderIndicators();
+     loadProgramTemplates(); 
+     $("openProgramReportBtn").onclick = openProgramReport;
       await refreshAll();
     }catch(e){$("loginMessage").textContent=e.message;$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}
   }
+function loadProgramTemplates() {
+  const select = $("programSelect");
+  if (!select) return;
 
+  select.innerHTML =
+    '<option value="">-- اختر أحد البرامج --</option>';
+
+  Object.keys(reportTemplates).forEach(programName => {
+    const option = document.createElement("option");
+    option.value = programName;
+    option.textContent = programName;
+    select.appendChild(option);
+  });
+}
+function openProgramReport() {
+  const select = $("programSelect");
+  const programName = select?.value;
+const templateSelect = $("reportTemplateSelect");
+const templateType = templateSelect?.value || "official";
+  if (!programName) {
+    alert("اختر أحد البرامج أولاً");
+    return;
+  }
+
+  const report = reportTemplates[programName];
+
+  if (!report) {
+    alert("تعذر العثور على نموذج التقرير");
+    return;
+  }
+
+  const goals = report.goals
+    .map(goal => `<li>${esc(goal)}</li>`)
+    .join("");
+
+  const reportWindow = window.open("", "_blank");
+
+  reportWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl" data-template="${templateType}">
+    <head>
+      <meta charset="UTF-8">
+      <title>${esc(programName)}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          direction: rtl;
+          max-width: 900px;
+          margin: 30px auto;
+          padding: 25px;
+          line-height: 1.9;
+        }
+
+        h1 {
+          text-align: center;
+        }
+
+        h2 {
+          margin-top: 25px;
+        }
+
+        .report-section {
+          border: 1px solid #ddd;
+          border-radius: 12px;
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        button {
+          padding: 10px 18px;
+          margin: 10px 5px;
+          cursor: pointer;
+        }
+
+        @media print {
+          button {
+            display: none;
+          }
+        }
+        /* ===== تصاميم قوالب التقارير ===== */
+
+/* 1- الرسمي الوزاري */
+html[data-template="official"] body {
+  background: #ffffff;
+  border-top: 8px solid #0f766e;
+}
+
+html[data-template="official"] h1,
+html[data-template="official"] h2 {
+  color: #0f766e;
+}
+
+html[data-template="official"] .report-section {
+  border-right: 5px solid #0f766e;
+  background: #f8fafc;
+}
+
+/* 2- الحديث الاحترافي */
+html[data-template="modern"] body {
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+}
+
+html[data-template="modern"] h1 {
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0f766e, #0891b2);
+  color: white;
+}
+
+html[data-template="modern"] .report-section {
+  border: none;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,.10);
+}
+
+/* 3- البصري بالصور */
+html[data-template="visual"] body {
+  background: #fafafa;
+}
+
+html[data-template="visual"] h1 {
+  background: #134e4a;
+  color: white;
+  padding: 25px;
+  border-radius: 15px;
+}
+
+html[data-template="visual"] .report-section {
+  border-radius: 18px;
+  border: 2px solid #d1fae5;
+  background: white;
+}
+
+/* 4- المختصر التنفيذي */
+html[data-template="executive"] body {
+  max-width: 800px;
+}
+
+html[data-template="executive"] .report-section {
+  padding: 12px 18px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border-right: 4px solid #334155;
+}
+
+html[data-template="executive"] h2 {
+  margin: 5px 0;
+}
+
+/* 5- التحليلي بالمؤشرات */
+html[data-template="analytics"] body {
+  background: #f8fafc;
+}
+
+html[data-template="analytics"] h1 {
+  color: #1e3a8a;
+}
+
+html[data-template="analytics"] .report-section {
+  background: white;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(30,58,138,.08);
+}
+
+html[data-template="analytics"] h2 {
+  color: #1d4ed8;
+}
+
+/* 6- الدائري / الأسطواني */
+html[data-template="circular"] body {
+  background:
+    radial-gradient(circle at top, #ecfeff 0, #ffffff 55%);
+}
+
+html[data-template="circular"] h1 {
+  width: 70%;
+  margin: 20px auto 35px;
+  padding: 25px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #0f766e, #06b6d4);
+  color: white;
+  box-shadow: 0 8px 22px rgba(15,118,110,.20);
+}
+
+html[data-template="circular"] .report-section {
+  border: 3px solid #99f6e4;
+  border-radius: 45px;
+  padding: 22px 30px;
+  background: white;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}  
+  /* ===== العناوين الرئيسية داخل التقارير ===== */
+
+.report-section h2 {
+  padding: 10px 18px;
+  margin: -15px -15px 16px;
+  color: #fff;
+  font-size: 19px;
+  border-radius: 10px;
+}
+
+/* الرسمي الوزاري */
+html[data-template="official"] .report-section h2 {
+  background: linear-gradient(135deg, #0f766e, #115e59);
+}
+
+/* الحديث الاحترافي */
+html[data-template="modern"] .report-section h2 {
+  background: linear-gradient(135deg, #0f766e, #0891b2);
+  border-radius: 14px;
+}
+
+/* البصري بالصور */
+html[data-template="visual"] .report-section h2 {
+  background: linear-gradient(135deg, #047857, #10b981);
+  border-radius: 14px;
+}
+
+/* المختصر التنفيذي */
+html[data-template="executive"] .report-section h2 {
+  background: linear-gradient(135deg, #334155, #475569);
+  border-radius: 8px;
+}
+
+/* التحليلي بالمؤشرات */
+html[data-template="analytics"] .report-section h2 {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #fff;
+  border-radius: 12px;
+}
+
+/* الدائري / الأسطواني */
+html[data-template="circular"] .report-section h2 {
+  width: fit-content;
+  min-width: 180px;
+  margin: -18px auto 18px;
+  padding: 10px 28px;
+  text-align: center;
+  background: linear-gradient(135deg, #0f766e, #06b6d4);
+  color: #fff;
+  border-radius: 40px;
+  box-shadow: 0 4px 12px rgba(15,118,110,.18);
+}
+      </style>
+    </head>
+
+    <body>
+      <h1>تقرير برنامج ${esc(programName)}</h1>
+
+      <div class="report-section">
+        <h2>نبذة عن البرنامج</h2>
+        <p>${esc(report.description)}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>الأهداف</h2>
+        <ul>${goals}</ul>
+      </div>
+
+      <div class="report-section">
+        <h2>الفئة المستهدفة</h2>
+        <p>${esc(report.target)}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>آلية التنفيذ</h2>
+        <p>${esc(report.implementation)}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>مؤشرات النجاح</h2>
+        <p>${esc(report.indicators)}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>النتائج</h2>
+        <p>${esc(report.results)}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>التوصيات</h2>
+        <p>${esc(report.recommendations)}</p>
+      </div>
+<div class="report-section">
+  <h2>📸 الشواهد والصور</h2>
+
+  <div class="report-photo-actions">
+    <label class="photo-btn">
+      📷 التقاط صورة
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        onchange="addReportPhotos(event)"
+        style="display:none"
+      >
+    </label>
+
+    <label class="photo-btn">
+      🖼️ اختيار من الاستديو
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onchange="addReportPhotos(event)"
+        style="display:none"
+      >
+    </label>
+  </div>
+
+  <div id="reportPhotos" class="report-photos"></div>
+</div>
+      <button onclick="window.print()">🖨️ طباعة التقرير</button>
+    </body>
+    </html>
+  `);
+
+  reportWindow.document.close();
+}
   function renderIndicators(){
     const q=$("searchInput").value.trim();
     $("indicatorsContainer").innerHTML=indicators.filter(x=>!q || x.title.includes(q)).map(item=>{
