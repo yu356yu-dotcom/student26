@@ -201,13 +201,16 @@ const reportTemplates = {
 };
 
 $("programReportPrintBtn").onclick = () => {
-const reportContent = document.getElementById("programReportModalContent");
+  const reportContent = document.getElementById("programReportModalContent");
   if (!reportContent) {
     alert("تعذر العثور على محتوى التقرير");
     return;
   }
 
   const printWindow = window.open("", "_blank", "width=900,height=1000");
+  const reportClone = reportContent.cloneNode(true);
+
+  reportClone.querySelectorAll("button, .report-photo-actions, .photo-layout-selector").forEach(el => el.remove());
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -216,52 +219,76 @@ const reportContent = document.getElementById("programReportModalContent");
       <meta charset="UTF-8">
       <title>تقرير البرنامج</title>
       <style>
-        @page {
-          size: A4 portrait;
-          margin: 10mm;
-        }
-
+        @page { size: A4 portrait; margin: 8mm; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #fff; }
         body {
-          font-family: Arial, sans-serif;
+          font-family: Arial, Tahoma, sans-serif;
           direction: rtl;
-          background: white;
-          margin: 0;
-          padding: 0;
+          color: #163c39;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-
+        h1 {
+          margin: 0 0 12px !important;
+          padding: 12px 16px !important;
+          text-align: center !important;
+          color: #075e54 !important;
+          background: #eaf5f2 !important;
+          border-right: 6px solid #d4af37 !important;
+          border-bottom: 3px solid #d4af37 !important;
+          border-radius: 10px !important;
+          font-size: 23px !important;
+          line-height: 1.35 !important;
+        }
+        .report-section {
+          margin: 0 0 8px !important;
+          padding: 10px 12px !important;
+          background: #f8fbfa !important;
+          border: 1px solid #d7e7e2 !important;
+          border-right: 5px solid #0f766e !important;
+          border-radius: 10px !important;
+          box-shadow: none !important;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .report-section h2 {
+          margin: -10px -12px 8px !important;
+          padding: 7px 12px !important;
+          background: linear-gradient(135deg, #0f766e, #115e59) !important;
+          color: #fff !important;
+          border: 0 !important;
+          border-radius: 9px 9px 4px 4px !important;
+          font-size: 16px !important;
+          line-height: 1.4 !important;
+        }
+        p, li { font-size: 12.5px !important; line-height: 1.6 !important; }
+        p { margin: 4px 0 !important; }
+        ul { margin: 4px 0 !important; padding-right: 20px !important; }
         .report-photos {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
-  gap: 10px !important;
-  width: 100% !important;
-  margin-top: 12px !important;
-  align-items: stretch !important;
-}
-
-.report-photos img {
-  width: 100% !important;
-  height: 155px !important;
-  object-fit: cover !important;
-  border-radius: 10px !important;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
-
-        button,
-        .report-photo-actions {
-          display: none !important;
+          display: grid !important;
+          grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)) !important;
+          gap: 8px !important;
+          width: 100% !important;
+          margin-top: 8px !important;
         }
+        .report-photos img {
+          width: 100% !important;
+          height: 135px !important;
+          object-fit: cover !important;
+          border: 1px solid #d7e7e2 !important;
+          border-radius: 8px !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+        button, .report-photo-actions, .photo-layout-selector { display: none !important; }
       </style>
     </head>
-
-    <body>
-      ${reportContent.innerHTML}
-    </body>
+    <body>${reportClone.innerHTML}</body>
     </html>
   `);
 
   printWindow.document.close();
-
   setTimeout(() => {
     printWindow.focus();
     printWindow.print();
@@ -343,28 +370,47 @@ const templateType = templateSelect?.value || "official";
       <title>${esc(programName)}</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
-          direction: rtl;
-          max-width: 900px;
-          margin: 30px auto;
-          padding: 25px;
-          line-height: 1.9;
-        }
+  font-family: Arial, "Tahoma", sans-serif;
+  direction: rtl;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 24px 32px;
+  box-sizing: border-box;
+  line-height: 1.7;
+  color: #163c39;
+  background: #ffffff;
+  overflow-x: hidden;
+}
 
         h1 {
-          text-align: center;
-        }
+  text-align: center;
+   color: #075e54 !important;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 8px 0 24px;
+  padding-bottom: 14px;
+  border-bottom: 3px solid #d4af37;
+}
 
-        h2 {
-          margin-top: 25px;
-        }
+h2 {
+  color: #075e54;
+  font-size: 21px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
 
         .report-section {
-          border: 1px solid #ddd;
-          border-radius: 12px;
-          padding: 15px;
-          margin-bottom: 15px;
-        }
+  background: #f8fbfa;
+  border: 1px solid #d7e7e2;
+  border-right: 5px solid #d4af37;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 10px rgba(7, 94, 84, 0.08);
+  break-inside: avoid;
+}
 
         button {
           padding: 10px 18px;
@@ -385,14 +431,29 @@ html[data-template="official"] body {
   border-top: 8px solid #0f766e;
 }
 
-html[data-template="official"] h1,
-html[data-template="official"] h2 {
-  color: #0f766e;
+html[data-template="official"] h1 {
+  color: #123c3a;
 }
 
-html[data-template="official"] .report-section {
-  border-right: 5px solid #0f766e;
-  background: #f8fafc;
+html[data-template="official"] h2 {
+  color: #0f766e;
+  font-weight: 800;
+  padding: 8px 14px;
+  margin: 18px 0 10px;
+  border-right: 5px solid #d4af37;
+  background: linear-gradient(90deg, #ffffff, #f0fdfa);
+  border-radius: 8px;
+}
+
+html[data-template="official"] body .report-section {
+  border: 1px solid #d7e7e2 !important;
+  border-right: 6px solid #0f766e !important;
+  background: linear-gradient(135deg, #ffffff, #f0fdfa) !important;
+  border-radius: 14px !important;
+  padding: 16px 20px !important;
+  margin: 14px 0 !important;
+  box-shadow: 0 3px 10px rgba(15, 118, 110, 0.08) !important;
+  break-inside: avoid;
 }
 
 /* 2- الحديث الاحترافي */
@@ -403,7 +464,7 @@ html[data-template="modern"] body {
 html[data-template="modern"] h1 {
   padding: 22px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #0f766e, #0891b2);
+  background: linear-gradient(135deg, #36afa5, #0891b2);
   color: white;
 }
 
@@ -703,16 +764,76 @@ html[data-template="visual"] .report-section h2 {
 .report-photos {
   break-inside: auto !important;
 } 
-.report-section {
-  break-inside: auto !important;
-  page-break-inside: auto !important;
-}
+
 
 .report-photos {
   break-inside: auto !important;
   page-break-inside: auto !important;
 }    
 }
+
+      /* ===== الهوية الموحدة النهائية لتقارير البرامج ===== */
+      body {
+        background: #f7fbfa !important;
+        color: #163c39 !important;
+      }
+      h1 {
+        color: #075e54 !important;
+        background: #eaf5f2 !important;
+        border-right: 7px solid #d4af37 !important;
+        border-bottom: 3px solid #d4af37 !important;
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
+        margin: 6px 0 20px !important;
+        font-size: 28px !important;
+        font-weight: 900 !important;
+      }
+      .report-section {
+        background: linear-gradient(135deg, #ffffff, #f4fbf9) !important;
+        border: 1px solid #d7e7e2 !important;
+        border-right: 6px solid #0f766e !important;
+        border-radius: 14px !important;
+        padding: 16px 18px !important;
+        margin: 0 0 14px !important;
+        box-shadow: 0 3px 10px rgba(15,118,110,.07) !important;
+      }
+      .report-section h2 {
+        margin: -16px -18px 12px !important;
+        padding: 9px 14px !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #0f766e, #115e59) !important;
+        border: 0 !important;
+        border-radius: 13px 13px 5px 5px !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+      }
+      .report-section p, .report-section li {
+        color: #263b39 !important;
+        line-height: 1.75 !important;
+      }
+      .photo-layout-selector {
+        margin: 10px 0 14px;
+        padding: 10px 12px;
+        background: #eef8f5;
+        border: 1px solid #d7e7e2;
+        border-radius: 10px;
+      }
+      .photo-layout-selector select {
+        margin-right: 8px;
+        padding: 8px 10px;
+        border: 1px solid #b9d7d0;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .report-photos {
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .report-photos img {
+        height: 175px !important;
+        object-fit: cover !important;
+        border-radius: 10px !important;
+      }
 
       </style>
     </head>

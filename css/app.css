@@ -24,20 +24,22 @@
 }
 
 #programReportModal .program-report-modal-card {
-  width: min(1100px, 96vw);
-  max-height: 92vh;
-  overflow-y: auto;
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #dce8e5;
-  box-shadow: 0 20px 60px rgba(15, 118, 110, 0.18);
+    width: min(1150px, 96vw);
+    max-height: 94vh;
+    overflow-y: auto;
+    background: #f8fbfa;
+    border-radius: 24px;
+    border: 1px solid #d7e7e2;
+    box-shadow: 0 24px 70px rgba(15, 118, 110, 0.20);
 }
 
 #programReportModal .modal-head {
-  background: linear-gradient(135deg, #0f766e, #0d9488);
-  color: #ffffff;
-  padding: 22px 26px;
-  border-radius: 22px 22px 0 0;
+    background: linear-gradient(135deg, #075e54, #0f766e);
+    color: #ffffff;
+    padding: 22px 28px;
+    border-radius: 24px 24px 0 0;
+    border-bottom: 4px solid #d4af37;
+    box-shadow: 0 6px 18px rgba(7, 94, 84, 0.15);
 }
 
 #programReportModal .modal-head h2 {
