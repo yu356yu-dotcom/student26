@@ -195,6 +195,79 @@ const reportTemplates = {
       renderIndicators();
      loadProgramTemplates(); 
      $("openProgramReportBtn").onclick = openProgramReport;
+     $("programReportCloseBtn").onclick = () => {
+  $("programReportModal").classList.add("hidden");
+  $("programReportModal").setAttribute("aria-hidden", "true");
+};
+
+$("programReportPrintBtn").onclick = () => {
+const reportContent = document.getElementById("programReportModalContent");
+  if (!reportContent) {
+    alert("تعذر العثور على محتوى التقرير");
+    return;
+  }
+
+  const printWindow = window.open("", "_blank", "width=900,height=1000");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير البرنامج</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm;
+        }
+
+        body {
+          font-family: Arial, sans-serif;
+          direction: rtl;
+          background: white;
+          margin: 0;
+          padding: 0;
+        }
+
+        .report-photos {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 12px !important;
+  align-items: stretch !important;
+}
+
+.report-photos img {
+  width: 100% !important;
+  height: 155px !important;
+  object-fit: cover !important;
+  border-radius: 10px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+        button,
+        .report-photo-actions {
+          display: none !important;
+        }
+      </style>
+    </head>
+
+    <body>
+      ${reportContent.innerHTML}
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 500);
+};
+
       await refreshAll();
     }catch(e){$("loginMessage").textContent=e.message;$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}
   }
@@ -233,7 +306,34 @@ const templateType = templateSelect?.value || "official";
     .map(goal => `<li>${esc(goal)}</li>`)
     .join("");
 
-  const reportWindow = window.open("", "_blank");
+  const reportWindow = {
+  document: {
+    write(html) {
+      const modal = $("programReportModal");
+      const content = $("programReportModalContent");
+      const title = $("programReportModalTitle");
+
+      if (!modal || !content) {
+        alert("تعذر فتح نافذة التقرير");
+        return;
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      content.innerHTML = doc.body.innerHTML;
+
+      if (title) {
+        title.textContent = programName;
+      }
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+    },
+
+    close() {}
+  }
+};
 
   reportWindow.document.write(`
     <!DOCTYPE html>
@@ -443,6 +543,177 @@ html[data-template="circular"] .report-section h2 {
   border-radius: 40px;
   box-shadow: 0 4px 12px rgba(15,118,110,.18);
 }
+/* ===== تحسين القالب البصري والصور ===== */
+
+html[data-template="visual"] body {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px;
+  background: #f4f8f7;
+  color: #1f2937;
+}
+
+html[data-template="visual"] h1 {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: #ffffff;
+  padding: 24px;
+  border-radius: 18px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 18px rgba(15,118,110,.16);
+}
+
+html[data-template="visual"] .report-section {
+  background: #ffffff;
+  border: 1px solid #dbe9e6;
+  border-right: 5px solid #0f766e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.05);
+}
+
+html[data-template="visual"] .report-section h2 {
+  color: #0f766e;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.report-photo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 15px 0 20px;
+}
+
+.photo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 18px;
+  background: #0f766e;
+  color: #ffffff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.report-photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.report-photos img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  break-inside: avoid;
+}
+/* ===== قوالب الصور ===== */
+
+/* تلقائي ذكي */
+.report-photos.layout-auto {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* صورتان */
+.report-photos.layout-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* أربع صور */
+.report-photos.layout-four {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ست صور */
+.report-photos.layout-six {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* صورة رئيسية + 4 صور */
+.report-photos.layout-featured {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.report-photos.layout-featured img:first-child {
+  grid-column: 1 / -1;
+  height: 300px;
+}
+
+.report-photos.layout-two img {
+  height: 260px;
+}
+
+.report-photos.layout-four img {
+  height: 210px;
+}
+
+.report-photos.layout-six img {
+  height: 170px;
+}
+@media (max-width: 700px) {
+  html[data-template="visual"] body {
+    padding: 12px;
+  }
+
+  .report-photos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-photos img {
+    height: 160px;
+  }
+
+  .photo-btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media print {
+  .report-photo-actions {
+    display: none !important;
+  }
+
+  html[data-template="visual"] .report-section {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+ .report-photos {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+
+.report-photos img {
+  width: 100% !important;
+  height: 150px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+.report-photos {
+  break-inside: auto !important;
+} 
+.report-section {
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+}
+
+.report-photos {
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+}    
+}
+
       </style>
     </head>
 
@@ -485,7 +756,17 @@ html[data-template="circular"] .report-section h2 {
       </div>
 <div class="report-section">
   <h2>📸 الشواهد والصور</h2>
+<div class="photo-layout-selector">
+  <label for="photoLayout"><strong>🖼️ اختر قالب الصور:</strong></label>
 
+  <select id="photoLayout" onchange="changePhotoLayout(this.value)">
+    <option value="auto">✨ تلقائي ذكي</option>
+    <option value="two">▣ صورتان</option>
+    <option value="four">▦ أربع صور</option>
+    <option value="six">▦ ست صور</option>
+    <option value="featured">⭐ صورة رئيسية + 4 صور</option>
+  </select>
+</div>
   <div class="report-photo-actions">
     <label class="photo-btn">
       📷 التقاط صورة
@@ -520,6 +801,45 @@ html[data-template="circular"] .report-section h2 {
 
   reportWindow.document.close();
 }
+window.changePhotoLayout = function(layout) {
+  const photos = document.getElementById("reportPhotos");
+  if (!photos) return;
+
+  photos.classList.remove(
+    "layout-auto",
+    "layout-two",
+    "layout-four",
+    "layout-six",
+    "layout-featured"
+  );
+
+  photos.classList.add("layout-" + layout);
+};
+window.openProgramReport = openProgramReport;
+window.addReportPhotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  const container = document.getElementById("reportPhotos");
+
+  if (!container || files.length === 0) return;
+
+  files.forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      img.alt = "صورة من شواهد البرنامج";
+      container.appendChild(img);
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  event.target.value = "";
+};
+
   function renderIndicators(){
     const q=$("searchInput").value.trim();
     $("indicatorsContainer").innerHTML=indicators.filter(x=>!q || x.title.includes(q)).map(item=>{

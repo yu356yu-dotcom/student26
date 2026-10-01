@@ -14,3 +14,79 @@
 .saved-analysis-inline .analysis-sheet{margin:0}
 .saved-analysis-inline .metric-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
 .saved-analysis-inline .chart-card{box-shadow:none}
+
+
+/* ===== تنسيق نافذة تقارير برامج التوجيه والإرشاد ===== */
+
+#programReportModal {
+  direction: rtl;
+  padding: 20px;
+}
+
+#programReportModal .program-report-modal-card {
+  width: min(1100px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid #dce8e5;
+  box-shadow: 0 20px 60px rgba(15, 118, 110, 0.18);
+}
+
+#programReportModal .modal-head {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: #ffffff;
+  padding: 22px 26px;
+  border-radius: 22px 22px 0 0;
+}
+
+#programReportModal .modal-head h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+#programReportModal .modal-head p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+#programReportModal .modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#programReportModal .modal-actions .btn {
+  border-radius: 10px;
+}
+
+#programReportModal #programReportContent {
+  padding: 24px;
+  background: #f8fbfa;
+}
+
+@media (max-width: 760px) {
+  #programReportModal {
+    padding: 8px;
+  }
+
+  #programReportModal .program-report-modal-card {
+    width: 100%;
+    max-height: 96vh;
+    border-radius: 16px;
+  }
+
+  #programReportModal .modal-head {
+    padding: 16px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #programReportModal .modal-head h2 {
+    font-size: 20px;
+  }
+
+  #programReportModal #programReportContent {
+    padding: 12px;
+  }
+}
