@@ -318,7 +318,7 @@ $("programReportPdfBtn").onclick = async () => {
     .replace(/\s+/g, "_");
 
   const reportClone = reportContent.cloneNode(true);
-
+reportClone.classList.add("pdf-export-mode");
   reportClone
     .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
     .forEach(el => el.remove());
@@ -378,7 +378,7 @@ $("programReportShareBtn").onclick = async () => {
   const fileName = `${safeName}.pdf`;
 
   const reportClone = reportContent.cloneNode(true);
-
+reportClone.classList.add("pdf-export-mode");
   reportClone
     .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
     .forEach(el => el.remove());
