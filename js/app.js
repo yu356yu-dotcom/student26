@@ -383,14 +383,17 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 if (isIOS) {
   reportClone.style.position = "fixed";
-  reportClone.style.left = "-10000px";
+ reportClone.style.left = "0";
+reportClone.style.zIndex = "-9999";
+reportClone.style.opacity = "1";
+reportClone.style.pointerEvents = "none";
   reportClone.style.top = "0";
   reportClone.style.width = "794px";
   reportClone.style.background = "#ffffff";
 
   document.body.appendChild(reportClone);
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 800));
 }  
 reportClone
     .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
