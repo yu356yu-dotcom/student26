@@ -131,7 +131,19 @@ onclick="document.getElementById('programReportsSection').classList.remove('hidd
           type="button">
           🖨️ طباعة
         </button>
+<button
+  id="programReportPdfBtn"
+  class="btn secondary"
+  type="button">
+  📄 حفظ PDF
+</button>
 
+<button
+  id="programReportShareBtn"
+  class="btn secondary"
+  type="button">
+  📤 مشاركة PDF
+</button>
         <button
           id="programReportCloseBtn"
           class="btn danger"
@@ -147,6 +159,7 @@ onclick="document.getElementById('programReportsSection').classList.remove('hidd
 </div>
   <script src="js/config.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

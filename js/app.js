@@ -199,14 +199,17 @@ const reportTemplates = {
   $("programReportModal").classList.add("hidden");
   $("programReportModal").setAttribute("aria-hidden", "true");
 };
-
+const isMobilePrint = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 $("programReportPrintBtn").onclick = () => {
   const reportContent = document.getElementById("programReportModalContent");
   if (!reportContent) {
     alert("تعذر العثور على محتوى التقرير");
     return;
   }
-
+if (isMobilePrint) {
+  window.print();
+  return;
+}
   const printWindow = window.open("", "_blank", "width=900,height=1000");
   const reportClone = reportContent.cloneNode(true);
 
@@ -294,7 +297,146 @@ $("programReportPrintBtn").onclick = () => {
     printWindow.print();
   }, 500);
 };
+$("programReportPdfBtn").onclick = async () => {
+  const reportContent = document.getElementById("programReportModalContent");
 
+  if (!reportContent) {
+    alert("تعذر العثور على محتوى التقرير");
+    return;
+  }
+
+  if (typeof html2pdf === "undefined") {
+    alert("تعذر تحميل أداة إنشاء PDF");
+    return;
+  }
+
+  const programName =
+    $("programSelect")?.value || "تقرير_برنامج";
+
+  const safeName = programName
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "_");
+
+  const reportClone = reportContent.cloneNode(true);
+
+  reportClone
+    .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
+    .forEach(el => el.remove());
+
+  const options = {
+    margin: 8,
+    filename: `${safeName}.pdf`,
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["avoid-all", "css", "legacy"]
+    }
+  };
+
+  try {
+    await html2pdf()
+      .set(options)
+      .from(reportClone)
+      .save();
+  } catch (error) {
+    console.error(error);
+    alert("حدث خطأ أثناء إنشاء ملف PDF");
+  }
+};
+$("programReportShareBtn").onclick = async () => {
+  const reportContent = document.getElementById("programReportModalContent");
+
+  if (!reportContent) {
+    alert("تعذر العثور على محتوى التقرير");
+    return;
+  }
+
+  if (typeof html2pdf === "undefined") {
+    alert("تعذر تحميل أداة إنشاء PDF");
+    return;
+  }
+
+  const programName =
+    $("programSelect")?.value || "تقرير_برنامج";
+
+  const safeName = programName
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "_");
+
+  const fileName = `${safeName}.pdf`;
+
+  const reportClone = reportContent.cloneNode(true);
+
+  reportClone
+    .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
+    .forEach(el => el.remove());
+
+  const options = {
+    margin: 8,
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["avoid-all", "css", "legacy"]
+    }
+  };
+
+  try {
+    const pdfBlob = await html2pdf()
+      .set(options)
+      .from(reportClone)
+      .outputPdf("blob");
+
+    const pdfFile = new File(
+      [pdfBlob],
+      fileName,
+      { type: "application/pdf" }
+    );
+
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [pdfFile] })
+    ) {
+      await navigator.share({
+        title: programName,
+        text: `تقرير برنامج ${programName}`,
+        files: [pdfFile]
+      });
+    } else {
+      alert("المشاركة المباشرة غير مدعومة على هذا الجهاز. استخدم زر حفظ PDF.");
+    }
+
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      console.error(error);
+      alert("حدث خطأ أثناء إنشاء أو مشاركة ملف PDF");
+    }
+  }
+};
       await refreshAll();
     }catch(e){$("loginMessage").textContent=e.message;$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}
   }

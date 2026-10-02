@@ -244,3 +244,38 @@
 #programReportsSection button:hover {
   background: #0b574b;
 }
+/* ===== طباعة تقرير البرنامج من الجوال ===== */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #programReportModal,
+  #programReportModal * {
+    visibility: visible !important;
+  }
+
+  #programReportModal {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  #programReportModalContent {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  #programReportModal button,
+  .report-photo-actions,
+  .photo-layout-selector {
+    display: none !important;
+  }
+}
