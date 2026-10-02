@@ -33,22 +33,43 @@
         <button id="logoutBtn" class="btn danger">خروج</button>
       </div>
     </header>
+<section id="mainSections" class="container">
 
-    <section class="dashboard container">
-      <div class="stat"><span id="indicatorCount">0</span><small>المؤشرات</small></div>
+  <h2>منصة التوجيه الطلابي</h2>
+
+  <div class="main-sections-grid">
+
+    <button type="button" id="openIndicatorsSection" class="main-section-card"
+onclick="document.getElementById('indicatorsContainer').classList.remove('hidden'); document.getElementById('indicatorsToolbar').classList.remove('hidden'); document.getElementById('programReportsSection').classList.add('hidden');"      <strong>مؤشرات التوجيه الطلابي</strong>
+ <span class="main-section-icon">📊</span>
+  
+<small>المؤشرات والتحليل والتقارير والمقارنات</small>
+    </button>
+
+ <span class="main-section-icon">📋</span>
+   
+<button type="button" id="openProgramsSection" class="main-section-card"
+onclick="document.getElementById('programReportsSection').classList.remove('hidden'); document.getElementById('indicatorsContainer').classList.add('hidden'); document.getElementById('indicatorsToolbar').classList.add('hidden');"      <strong>برامج التوجيه والإرشاد</strong>
+      <small>البرامج والتقارير والشواهد والصور</small>
+    </button>
+
+  </div>
+
+</section>
+<section id="indicatorsSection" class="dashboard container hidden">      <div class="stat"><span id="indicatorCount">0</span><small>المؤشرات</small></div>
       <div class="stat"><span id="analysisCount">0</span><small>تحليلات محفوظة</small></div>
       <div class="stat"><span id="attachmentCount">0</span><small>ملفات مرفوعة</small></div>
       <div class="stat"><span id="lastUpdate">—</span><small>آخر تحديث</small></div>
     </section>
 
-    <section class="toolbar container">
+    <section id="indicatorsToolbar" class="toolbar container">
       <input id="searchInput" type="search" placeholder="ابحث في المؤشرات..." />
       <button id="expandAllBtn" class="btn secondary">فتح جميع المؤشرات</button>
     </section>
 
-    <section id="indicatorsContainer" class="container"></section>
-  <section id="programReportsSection" class="container">
-  <h2>📋 تقارير برامج التوجيه والإرشاد</h2>
+    <section id="indicatorsContainer" class="container hidden"></section>
+<section id="programReportsSection" class="container hidden">
+    <h2>📋 تقارير برامج التوجيه والإرشاد</h2>
 
   <div class="program-report-toolbar">
     <label for="programSelect">اختر البرنامج:</label>
@@ -59,12 +80,9 @@
 <label for="reportTemplateSelect">اختر قالب التقرير:</label>
 
 <select id="reportTemplateSelect">
-  <option value="official">🏛️ القالب الرسمي الوزاري</option>
-  <option value="modern">✨ القالب الحديث الاحترافي</option>
-  <option value="visual">🖼️ القالب البصري بالصور</option>
-  <option value="executive">📄 القالب المختصر التنفيذي</option>
-  <option value="analytics">📊 القالب التحليلي بالمؤشرات</option>
-  <option value="circular">⭕ القالب الأسطواني / الدائري</option>
+  <option value="official">🏛️ النموذج الرسمي الحالي</option>
+  <option value="photo">🖼️ النموذج البصري المصور</option>
+  <option value="premium">⭐ النموذج المميز</option>
 </select>
     <button id="openProgramReportBtn" type="button">
       إنشاء التقرير
