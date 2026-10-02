@@ -379,7 +379,20 @@ $("programReportShareBtn").onclick = async () => {
 
   const reportClone = reportContent.cloneNode(true);
 reportClone.classList.add("pdf-export-mode");
-  reportClone
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+if (isIOS) {
+  reportClone.style.position = "fixed";
+  reportClone.style.left = "-10000px";
+  reportClone.style.top = "0";
+  reportClone.style.width = "794px";
+  reportClone.style.background = "#ffffff";
+
+  document.body.appendChild(reportClone);
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+}  
+reportClone
     .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
     .forEach(el => el.remove());
 
