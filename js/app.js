@@ -513,7 +513,21 @@ const templateType = templateSelect?.value || "official";
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
 
-      content.innerHTML = doc.body.innerHTML;
+      const reportStyles = doc.querySelector("style")?.textContent || "";
+
+content.innerHTML = `
+  <style>
+    ${reportStyles}
+  </style>
+
+  <div
+    class="program-report-export"
+    data-template="${templateType}"
+    dir="rtl"
+  >
+    ${doc.body.innerHTML}
+  </div>
+`;
 
       if (title) {
         title.textContent = programName;
