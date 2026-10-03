@@ -318,44 +318,52 @@ $("programReportShareBtn").onclick = async () => {
       .replace(/[\\/:*?"<>|]/g, "")
       .replace(/\s+/g, "_");
 
-    const fileName = `${safeName}.pdf`;
-
-    // نسخة مستقلة من التقرير حتى لا نؤثر على التقرير الظاهر
+    // نستخدم التقرير الظاهر نفسه وليس نسخة مخفية خارج الشاشة
     const reportClone = reportContent.cloneNode(true);
 
-    reportClone.classList.add("pdf-export-mode");
-
-    // حذف أزرار التحكم فقط مع الإبقاء على الشواهد والصور
+    // إزالة أزرار التحكم فقط مع إبقاء الشواهد والصور
     reportClone
       .querySelectorAll(
         "button, .report-photo-actions, .photo-layout-selector, input[type='file']"
       )
-      .forEach((el) => el.remove());
+      .forEach(el => el.remove());
 
-    // تثبيت مقاس التقرير ليظهر بنفس الشكل على الآيفون والكمبيوتر
-    reportClone.style.width = "794px";
-    reportClone.style.maxWidth = "794px";
-    reportClone.style.boxSizing = "border-box";
-    reportClone.style.background = "#ffffff";
-    reportClone.style.direction = "rtl";
-    reportClone.style.position = "fixed";
-    reportClone.style.left = "0";
-    reportClone.style.top = "0";
-    reportClone.style.zIndex = "-9999";
-    reportClone.style.pointerEvents = "none";
+    // حاوية مؤقتة ظاهرة لمحرك PDF ولكن فوق الصفحة
+    const renderHost = document.createElement("div");
 
-    document.body.appendChild(reportClone);
+    Object.assign(renderHost.style, {
+      position: "fixed",
+      left: "0",
+      top: "0",
+      width: "794px",
+      background: "#ffffff",
+      zIndex: "999999",
+      opacity: "1",
+      pointerEvents: "none"
+    });
 
-    // انتظار تحميل الصور والشواهد قبل إنشاء PDF
-    const images = Array.from(reportClone.querySelectorAll("img"));
+    Object.assign(reportClone.style, {
+      display: "block",
+      visibility: "visible",
+      opacity: "1",
+      width: "794px",
+      maxWidth: "794px",
+      background: "#ffffff"
+    });
+
+    renderHost.appendChild(reportClone);
+    document.body.appendChild(renderHost);
+
+    // انتظار تحميل الصور والشواهد
+    const images = [...reportClone.querySelectorAll("img")];
 
     await Promise.all(
-      images.map((img) => {
+      images.map(img => {
         if (img.complete && img.naturalWidth > 0) {
           return Promise.resolve();
         }
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           img.onload = resolve;
           img.onerror = resolve;
           setTimeout(resolve, 3000);
@@ -363,12 +371,16 @@ $("programReportShareBtn").onclick = async () => {
       })
     );
 
-    // انتظار قصير حتى يطبق Safari التنسيقات
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    // إعطاء Safari وقتًا للرسم
+    await new Promise(resolve =>
+      requestAnimationFrame(() =>
+        requestAnimationFrame(resolve)
+      )
+    );
 
     const options = {
       margin: 8,
-      filename: fileName,
+      filename: `${safeName}.pdf`,
 
       image: {
         type: "jpeg",
@@ -394,29 +406,25 @@ $("programReportShareBtn").onclick = async () => {
 
       pagebreak: {
         mode: ["css", "legacy"],
-        avoid: [
-          ".report-section",
-          ".report-photo-item",
-          "img"
-        ]
+        avoid: [".report-section", ".report-photo-item", "img"]
       }
     };
 
-    // إنشاء PDF كملف Blob
+    // إنشاء PDF كملف Blob بدلاً من تنزيله
     const pdfBlob = await html2pdf()
       .set(options)
       .from(reportClone)
       .outputPdf("blob");
 
-    reportClone.remove();
+    renderHost.remove();
 
     const pdfFile = new File(
       [pdfBlob],
-      fileName,
+      `${safeName}.pdf`,
       { type: "application/pdf" }
     );
 
-    // الآيفون والأجهزة التي تدعم مشاركة الملفات
+    // مشاركة مباشرة في iPhone / iPad عند دعم مشاركة الملفات
     if (
       navigator.share &&
       navigator.canShare &&
@@ -424,19 +432,19 @@ $("programReportShareBtn").onclick = async () => {
     ) {
       await navigator.share({
         title: programName,
-        text: `تقرير برنامج ${programName}`,
         files: [pdfFile]
       });
 
       return;
     }
 
-    // بديل للكمبيوتر أو المتصفح الذي لا يدعم مشاركة الملفات
+    // بديل للكمبيوتر أو المتصفحات التي لا تدعم مشاركة الملفات
     const pdfUrl = URL.createObjectURL(pdfBlob);
-
     const link = document.createElement("a");
+
     link.href = pdfUrl;
-    link.download = fileName;
+    link.download = `${safeName}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -448,7 +456,7 @@ $("programReportShareBtn").onclick = async () => {
   } catch (error) {
     if (error?.name !== "AbortError") {
       console.error(error);
-      alert("حدث خطأ أثناء إنشاء أو مشاركة ملف PDF");
+      alert("تعذر إنشاء أو مشاركة ملف PDF");
     }
   }
 };
