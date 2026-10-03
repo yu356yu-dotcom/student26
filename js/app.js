@@ -310,52 +310,191 @@ $("programReportShareBtn").onclick = async () => {
     return;
   }
 
+  const programName =
+    $("programSelect")?.value || "تقرير_برنامج";
+
+  const safeName = programName
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "_");
+
+  let pdfModeStyle = null;
+
   try {
-    const programName =
-      $("programSelect")?.value || "تقرير_برنامج";
+    // ==================================================
+    // تنسيق خاص بإنشاء PDF
+    // لا يغيّر شكل التقرير الأصلي
+    // ==================================================
 
-    const safeName = programName
-      .replace(/[\\/:*?"<>|]/g, "")
-      .replace(/\s+/g, "_");
+    pdfModeStyle = document.createElement("style");
 
-    // نستخدم التقرير الظاهر نفسه وليس نسخة مخفية خارج الشاشة
-    const reportClone = reportContent.cloneNode(true);
+    pdfModeStyle.id = "program-pdf-export-style";
 
-    // إزالة أزرار التحكم فقط مع إبقاء الشواهد والصور
-    reportClone
-      .querySelectorAll(
-        "button, .report-photo-actions, .photo-layout-selector, input[type='file']"
-      )
-      .forEach(el => el.remove());
+    pdfModeStyle.textContent = `
+      #programReportModalContent {
+        direction: rtl !important;
+        background: #ffffff !important;
+        color: #163c39 !important;
+        width: 794px !important;
+        max-width: 794px !important;
+        padding: 24px !important;
+        box-sizing: border-box !important;
+        font-family: Arial, Tahoma, sans-serif !important;
+      }
 
-    // حاوية مؤقتة ظاهرة لمحرك PDF ولكن فوق الصفحة
-    const renderHost = document.createElement("div");
+      #programReportModalContent h1 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
 
-    Object.assign(renderHost.style, {
-      position: "fixed",
-      left: "0",
-      top: "0",
-      width: "794px",
-      background: "#ffffff",
-      zIndex: "999999",
-      opacity: "1",
-      pointerEvents: "none"
-    });
+        color: #075e54 !important;
+        background: #eaf5f2 !important;
 
-    Object.assign(reportClone.style, {
-      display: "block",
-      visibility: "visible",
-      opacity: "1",
-      width: "794px",
-      maxWidth: "794px",
-      background: "#ffffff"
-    });
+        border-right: 7px solid #d4af37 !important;
+        border-bottom: 3px solid #d4af37 !important;
 
-    renderHost.appendChild(reportClone);
-    document.body.appendChild(renderHost);
+        border-radius: 12px !important;
 
-    // انتظار تحميل الصور والشواهد
-    const images = [...reportClone.querySelectorAll("img")];
+        padding: 14px 18px !important;
+        margin: 6px 0 20px !important;
+
+        font-size: 28px !important;
+        font-weight: 800 !important;
+        line-height: 1.5 !important;
+
+        text-align: center !important;
+      }
+
+      #programReportModalContent .report-section {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+
+        background: #f8fbfa !important;
+
+        border: 1px solid #d7e7e2 !important;
+        border-right: 6px solid #0f766e !important;
+
+        border-radius: 14px !important;
+
+        padding: 16px 18px !important;
+        margin: 0 0 14px !important;
+
+        box-shadow: none !important;
+
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      #programReportModalContent .report-section h2 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+
+        background: #0f766e !important;
+        background-image: none !important;
+
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+
+        padding: 10px 14px !important;
+        margin: -16px -18px 12px !important;
+
+        border: 0 !important;
+        border-radius: 13px 13px 5px 5px !important;
+
+        font-family: Arial, Tahoma, sans-serif !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        line-height: 1.6 !important;
+
+        direction: rtl !important;
+        text-align: right !important;
+
+        text-shadow: none !important;
+        transform: none !important;
+        filter: none !important;
+      }
+
+      #programReportModalContent p,
+      #programReportModalContent li {
+        display: list-item;
+        visibility: visible !important;
+        opacity: 1 !important;
+
+        color: #263b39 !important;
+        -webkit-text-fill-color: #263b39 !important;
+
+        font-family: Arial, Tahoma, sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        line-height: 1.8 !important;
+
+        direction: rtl !important;
+        text-align: right !important;
+
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      #programReportModalContent p {
+        display: block !important;
+      }
+
+      #programReportModalContent ul {
+        direction: rtl !important;
+        text-align: right !important;
+        padding-right: 24px !important;
+        padding-left: 0 !important;
+      }
+
+      #programReportModalContent .report-photos {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin-top: 12px !important;
+      }
+
+      #programReportModalContent .report-photos img {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+
+        width: 100% !important;
+        height: 180px !important;
+
+        object-fit: cover !important;
+
+        border: 1px solid #d7e7e2 !important;
+        border-radius: 8px !important;
+
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      #programReportModalContent button,
+      #programReportModalContent .report-photo-actions,
+      #programReportModalContent .photo-layout-selector,
+      #programReportModalContent input[type="file"] {
+        display: none !important;
+      }
+    `;
+
+    document.head.appendChild(pdfModeStyle);
+
+    // ==================================================
+    // انتظار الخطوط
+    // ==================================================
+
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
+    // ==================================================
+    // انتظار الصور
+    // ==================================================
+
+    const images = [...reportContent.querySelectorAll("img")];
 
     await Promise.all(
       images.map(img => {
@@ -366,20 +505,31 @@ $("programReportShareBtn").onclick = async () => {
         return new Promise(resolve => {
           img.onload = resolve;
           img.onerror = resolve;
+
           setTimeout(resolve, 3000);
         });
       })
     );
 
-    // إعطاء Safari وقتًا للرسم
+    // ==================================================
+    // إعطاء المتصفح وقتًا لتطبيق تنسيق PDF
+    // ==================================================
+
     await new Promise(resolve =>
       requestAnimationFrame(() =>
-        requestAnimationFrame(resolve)
+        requestAnimationFrame(() =>
+          setTimeout(resolve, 250)
+        )
       )
     );
 
+    // ==================================================
+    // إعداد PDF
+    // ==================================================
+
     const options = {
-      margin: 8,
+      margin: [8, 8, 8, 8],
+
       filename: `${safeName}.pdf`,
 
       image: {
@@ -389,46 +539,77 @@ $("programReportShareBtn").onclick = async () => {
 
       html2canvas: {
         scale: 2,
+
         useCORS: true,
         allowTaint: true,
+
         backgroundColor: "#ffffff",
+
         logging: false,
+
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 794
+
+        windowWidth: 794,
+
+        foreignObjectRendering: false
       },
 
       jsPDF: {
         unit: "mm",
         format: "a4",
-        orientation: "portrait"
+        orientation: "portrait",
+        compress: true
       },
 
       pagebreak: {
         mode: ["css", "legacy"],
-        avoid: [".report-section", ".report-photo-item", "img"]
+
+        avoid: [
+          ".report-section",
+          ".report-photos",
+          "img",
+          "h2"
+        ]
       }
     };
 
-    // إنشاء PDF كملف Blob بدلاً من تنزيله
+    // ==================================================
+    // مهم:
+    // نحول التقرير الحقيقي الظاهر نفسه
+    // وليس clone منفصل
+    // ==================================================
+
     const pdfBlob = await html2pdf()
       .set(options)
-      .from(reportClone)
+      .from(reportContent)
       .outputPdf("blob");
-
-    renderHost.remove();
 
     const pdfFile = new File(
       [pdfBlob],
       `${safeName}.pdf`,
-      { type: "application/pdf" }
+      {
+        type: "application/pdf"
+      }
     );
 
-    // مشاركة مباشرة في iPhone / iPad عند دعم مشاركة الملفات
+    // ==================================================
+    // إزالة تنسيق PDF وإرجاع الصفحة كما كانت
+    // ==================================================
+
+    pdfModeStyle.remove();
+    pdfModeStyle = null;
+
+    // ==================================================
+    // iPhone / iPad / الأجهزة التي تدعم مشاركة الملفات
+    // ==================================================
+
     if (
       navigator.share &&
       navigator.canShare &&
-      navigator.canShare({ files: [pdfFile] })
+      navigator.canShare({
+        files: [pdfFile]
+      })
     ) {
       await navigator.share({
         title: programName,
@@ -438,15 +619,24 @@ $("programReportShareBtn").onclick = async () => {
       return;
     }
 
-    // بديل للكمبيوتر أو المتصفحات التي لا تدعم مشاركة الملفات
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const link = document.createElement("a");
+    // ==================================================
+    // الكمبيوتر والمتصفحات الأخرى
+    // ==================================================
+
+    const pdfUrl =
+      URL.createObjectURL(pdfBlob);
+
+    const link =
+      document.createElement("a");
 
     link.href = pdfUrl;
-    link.download = `${safeName}.pdf`;
+    link.download =
+      `${safeName}.pdf`;
 
     document.body.appendChild(link);
+
     link.click();
+
     link.remove();
 
     setTimeout(() => {
@@ -454,9 +644,20 @@ $("programReportShareBtn").onclick = async () => {
     }, 5000);
 
   } catch (error) {
+
+    if (pdfModeStyle) {
+      pdfModeStyle.remove();
+    }
+
     if (error?.name !== "AbortError") {
-      console.error(error);
-      alert("تعذر إنشاء أو مشاركة ملف PDF");
+      console.error(
+        "Program PDF error:",
+        error
+      );
+
+      alert(
+        "تعذر إنشاء أو مشاركة ملف PDF"
+      );
     }
   }
 };
