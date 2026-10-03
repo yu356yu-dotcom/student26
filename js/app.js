@@ -297,64 +297,6 @@ if (isMobilePrint) {
     printWindow.print();
   }, 500);
 };
-$("programReportPdfBtn").onclick = async () => {
-  const reportContent = document.getElementById("programReportModalContent");
-
-  if (!reportContent) {
-    alert("تعذر العثور على محتوى التقرير");
-    return;
-  }
-
-  if (typeof html2pdf === "undefined") {
-    alert("تعذر تحميل أداة إنشاء PDF");
-    return;
-  }
-
-  const programName =
-    $("programSelect")?.value || "تقرير_برنامج";
-
-  const safeName = programName
-    .replace(/[\\/:*?"<>|]/g, "")
-    .replace(/\s+/g, "_");
-
-  const reportClone = reportContent.cloneNode(true);
-reportClone.classList.add("pdf-export-mode");
-  reportClone
-    .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
-    .forEach(el => el.remove());
-
-  const options = {
-    margin: 8,
-    filename: `${safeName}.pdf`,
-    image: {
-      type: "jpeg",
-      quality: 0.98
-    },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff"
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    },
-    pagebreak: {
-      mode: ["avoid-all", "css", "legacy"]
-    }
-  };
-
-  try {
-    await html2pdf()
-      .set(options)
-      .from(reportClone)
-      .save();
-  } catch (error) {
-    console.error(error);
-    alert("حدث خطأ أثناء إنشاء ملف PDF");
-  }
-};
 $("programReportShareBtn").onclick = async () => {
   const reportContent = document.getElementById("programReportModalContent");
 
@@ -368,63 +310,105 @@ $("programReportShareBtn").onclick = async () => {
     return;
   }
 
-  const programName =
-    $("programSelect")?.value || "تقرير_برنامج";
-
-  const safeName = programName
-    .replace(/[\\/:*?"<>|]/g, "")
-    .replace(/\s+/g, "_");
-
-  const fileName = `${safeName}.pdf`;
-
-  const reportClone = reportContent.cloneNode(true);
-reportClone.classList.add("pdf-export-mode");
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-if (isIOS) {
-  reportClone.style.position = "fixed";
- reportClone.style.left = "0";
-reportClone.style.zIndex = "-9999";
-reportClone.style.opacity = "1";
-reportClone.style.pointerEvents = "none";
-  reportClone.style.top = "0";
-  reportClone.style.width = "794px";
-  reportClone.style.background = "#ffffff";
-
-  document.body.appendChild(reportClone);
-
-  await new Promise(resolve => setTimeout(resolve, 800));
-}  
-reportClone
-    .querySelectorAll("button, .report-photo-actions, .photo-layout-selector")
-    .forEach(el => el.remove());
-
-  const options = {
-    margin: 8,
-    image: {
-      type: "jpeg",
-      quality: 0.98
-    },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff"
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    },
-    pagebreak: {
-      mode: ["avoid-all", "css", "legacy"]
-    }
-  };
-
   try {
+    const programName =
+      $("programSelect")?.value || "تقرير_برنامج";
+
+    const safeName = programName
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, "_");
+
+    const fileName = `${safeName}.pdf`;
+
+    // نسخة مستقلة من التقرير حتى لا نؤثر على التقرير الظاهر
+    const reportClone = reportContent.cloneNode(true);
+
+    reportClone.classList.add("pdf-export-mode");
+
+    // حذف أزرار التحكم فقط مع الإبقاء على الشواهد والصور
+    reportClone
+      .querySelectorAll(
+        "button, .report-photo-actions, .photo-layout-selector, input[type='file']"
+      )
+      .forEach((el) => el.remove());
+
+    // تثبيت مقاس التقرير ليظهر بنفس الشكل على الآيفون والكمبيوتر
+    reportClone.style.width = "794px";
+    reportClone.style.maxWidth = "794px";
+    reportClone.style.boxSizing = "border-box";
+    reportClone.style.background = "#ffffff";
+    reportClone.style.direction = "rtl";
+    reportClone.style.position = "fixed";
+    reportClone.style.left = "0";
+    reportClone.style.top = "0";
+    reportClone.style.zIndex = "-9999";
+    reportClone.style.pointerEvents = "none";
+
+    document.body.appendChild(reportClone);
+
+    // انتظار تحميل الصور والشواهد قبل إنشاء PDF
+    const images = Array.from(reportClone.querySelectorAll("img"));
+
+    await Promise.all(
+      images.map((img) => {
+        if (img.complete && img.naturalWidth > 0) {
+          return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+          setTimeout(resolve, 3000);
+        });
+      })
+    );
+
+    // انتظار قصير حتى يطبق Safari التنسيقات
+    await new Promise((resolve) => setTimeout(resolve, 700));
+
+    const options = {
+      margin: 8,
+      filename: fileName,
+
+      image: {
+        type: "jpeg",
+        quality: 0.98
+      },
+
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794
+      },
+
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait"
+      },
+
+      pagebreak: {
+        mode: ["css", "legacy"],
+        avoid: [
+          ".report-section",
+          ".report-photo-item",
+          "img"
+        ]
+      }
+    };
+
+    // إنشاء PDF كملف Blob
     const pdfBlob = await html2pdf()
       .set(options)
       .from(reportClone)
       .outputPdf("blob");
+
+    reportClone.remove();
 
     const pdfFile = new File(
       [pdfBlob],
@@ -432,6 +416,7 @@ reportClone
       { type: "application/pdf" }
     );
 
+    // الآيفون والأجهزة التي تدعم مشاركة الملفات
     if (
       navigator.share &&
       navigator.canShare &&
@@ -442,9 +427,23 @@ reportClone
         text: `تقرير برنامج ${programName}`,
         files: [pdfFile]
       });
-    } else {
-      alert("المشاركة المباشرة غير مدعومة على هذا الجهاز. استخدم زر حفظ PDF.");
+
+      return;
     }
+
+    // بديل للكمبيوتر أو المتصفح الذي لا يدعم مشاركة الملفات
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(pdfUrl);
+    }, 5000);
 
   } catch (error) {
     if (error?.name !== "AbortError") {
