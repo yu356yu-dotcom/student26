@@ -298,12 +298,165 @@ if (isMobilePrint) {
   }, 500);
 };
 $("programReportShareBtn").onclick = async () => {
-  const reportContent = document.getElementById("programReportModalContent");
+  const reportContent =
+    document.getElementById("programReportModalContent");
 
   if (!reportContent) {
     alert("تعذر العثور على محتوى التقرير");
     return;
   }
+
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" &&
+     navigator.maxTouchPoints > 1);
+
+  // ==========================================
+  // iPhone / iPad
+  // نستخدم محرك Safari الأصلي للعربية
+  // ==========================================
+  if (isIOS) {
+    document.body.classList.add("program-native-print");
+
+    const style = document.createElement("style");
+    style.id = "ios-program-print-style";
+
+    style.textContent = `
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+
+      @media print {
+
+        body.program-native-print > * {
+          visibility: hidden !important;
+        }
+
+        body.program-native-print
+        #programReportModal,
+        body.program-native-print
+        #programReportModal * {
+          visibility: visible !important;
+        }
+
+        body.program-native-print
+        #programReportModal {
+          display: block !important;
+          position: absolute !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
+          background: #ffffff !important;
+        }
+
+        body.program-native-print
+        #programReportModalContent {
+          display: block !important;
+          position: relative !important;
+          width: 100% !important;
+          max-width: none !important;
+          height: auto !important;
+          overflow: visible !important;
+          direction: rtl !important;
+          background: #ffffff !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        #programReportModalContent
+        .program-report-export {
+          width: 100% !important;
+          max-width: none !important;
+          direction: rtl !important;
+        }
+
+        #programReportModalContent
+        .report-section {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        #programReportModalContent
+        .report-section h2 {
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+          background: #0f766e !important;
+          background-image: none !important;
+        }
+
+        #programReportModalContent p,
+        #programReportModalContent li {
+          color: #263b39 !important;
+          -webkit-text-fill-color: #263b39 !important;
+          direction: rtl !important;
+          text-align: right !important;
+        }
+
+        #programReportModalContent
+        .report-photos {
+          display: grid !important;
+          grid-template-columns:
+            repeat(2, 1fr) !important;
+          gap: 8px !important;
+        }
+
+        #programReportModalContent
+        .report-photos img {
+          display: block !important;
+          width: 100% !important;
+          height: 150px !important;
+          object-fit: cover !important;
+          break-inside: avoid !important;
+        }
+
+        #programReportModalContent button,
+        #programReportModalContent
+        .report-photo-actions,
+        #programReportModalContent
+        .photo-layout-selector,
+        #programReportModalContent
+        input[type="file"],
+        #programReportModalTitle,
+        #programReportCloseBtn,
+        #programReportPrintBtn,
+        #programReportShareBtn {
+          display: none !important;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
+
+    await new Promise(resolve =>
+      setTimeout(resolve, 300)
+    );
+
+    window.print();
+
+    setTimeout(() => {
+      document.body.classList.remove(
+        "program-native-print"
+      );
+
+      document.getElementById(
+        "ios-program-print-style"
+      )?.remove();
+    }, 1500);
+
+    return;
+  }
+
+  // ==========================================
+  // Laptop / Desktop
+  // ==========================================
 
   if (typeof html2pdf === "undefined") {
     alert("تعذر تحميل أداة إنشاء PDF");
@@ -311,298 +464,127 @@ $("programReportShareBtn").onclick = async () => {
   }
 
   const programName =
-    $("programSelect")?.value || "تقرير_برنامج";
+    $("programSelect")?.value ||
+    "تقرير_برنامج";
 
   const safeName = programName
     .replace(/[\\/:*?"<>|]/g, "")
     .replace(/\s+/g, "_");
 
-  let pdfModeStyle = null;
-
   try {
-    // ==================================================
-    // تنسيق خاص بإنشاء PDF
-    // لا يغيّر شكل التقرير الأصلي
-    // ==================================================
 
-    pdfModeStyle = document.createElement("style");
+    const reportClone =
+      reportContent.cloneNode(true);
 
-    pdfModeStyle.id = "program-pdf-export-style";
+    reportClone
+      .querySelectorAll(
+        "button, .report-photo-actions, .photo-layout-selector, input[type='file']"
+      )
+      .forEach(el => el.remove());
 
-    pdfModeStyle.textContent = `
-      #programReportModalContent {
-        direction: rtl !important;
-        background: #ffffff !important;
-        color: #163c39 !important;
-        width: 794px !important;
-        max-width: 794px !important;
-        padding: 24px !important;
-        box-sizing: border-box !important;
-        font-family: Arial, Tahoma, sans-serif !important;
-      }
+    const host =
+      document.createElement("div");
 
-      #programReportModalContent h1 {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    Object.assign(host.style, {
+      position: "fixed",
+      left: "0",
+      top: "0",
+      width: "794px",
+      background: "#ffffff",
+      zIndex: "999999",
+      pointerEvents: "none"
+    });
 
-        color: #075e54 !important;
-        background: #eaf5f2 !important;
+    Object.assign(reportClone.style, {
+      width: "794px",
+      maxWidth: "794px",
+      background: "#ffffff",
+      direction: "rtl"
+    });
 
-        border-right: 7px solid #d4af37 !important;
-        border-bottom: 3px solid #d4af37 !important;
+    host.appendChild(reportClone);
+    document.body.appendChild(host);
 
-        border-radius: 12px !important;
-
-        padding: 14px 18px !important;
-        margin: 6px 0 20px !important;
-
-        font-size: 28px !important;
-        font-weight: 800 !important;
-        line-height: 1.5 !important;
-
-        text-align: center !important;
-      }
-
-      #programReportModalContent .report-section {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-
-        background: #f8fbfa !important;
-
-        border: 1px solid #d7e7e2 !important;
-        border-right: 6px solid #0f766e !important;
-
-        border-radius: 14px !important;
-
-        padding: 16px 18px !important;
-        margin: 0 0 14px !important;
-
-        box-shadow: none !important;
-
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      #programReportModalContent .report-section h2 {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-
-        background: #0f766e !important;
-        background-image: none !important;
-
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-
-        padding: 10px 14px !important;
-        margin: -16px -18px 12px !important;
-
-        border: 0 !important;
-        border-radius: 13px 13px 5px 5px !important;
-
-        font-family: Arial, Tahoma, sans-serif !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        line-height: 1.6 !important;
-
-        direction: rtl !important;
-        text-align: right !important;
-
-        text-shadow: none !important;
-        transform: none !important;
-        filter: none !important;
-      }
-
-      #programReportModalContent p,
-      #programReportModalContent li {
-        display: list-item;
-        visibility: visible !important;
-        opacity: 1 !important;
-
-        color: #263b39 !important;
-        -webkit-text-fill-color: #263b39 !important;
-
-        font-family: Arial, Tahoma, sans-serif !important;
-        font-size: 14px !important;
-        font-weight: 400 !important;
-        line-height: 1.8 !important;
-
-        direction: rtl !important;
-        text-align: right !important;
-
-        text-shadow: none !important;
-        filter: none !important;
-      }
-
-      #programReportModalContent p {
-        display: block !important;
-      }
-
-      #programReportModalContent ul {
-        direction: rtl !important;
-        text-align: right !important;
-        padding-right: 24px !important;
-        padding-left: 0 !important;
-      }
-
-      #programReportModalContent .report-photos {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-        width: 100% !important;
-        margin-top: 12px !important;
-      }
-
-      #programReportModalContent .report-photos img {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-
-        width: 100% !important;
-        height: 180px !important;
-
-        object-fit: cover !important;
-
-        border: 1px solid #d7e7e2 !important;
-        border-radius: 8px !important;
-
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      #programReportModalContent button,
-      #programReportModalContent .report-photo-actions,
-      #programReportModalContent .photo-layout-selector,
-      #programReportModalContent input[type="file"] {
-        display: none !important;
-      }
-    `;
-
-    document.head.appendChild(pdfModeStyle);
-
-    // ==================================================
-    // انتظار الخطوط
-    // ==================================================
-
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
-
-    // ==================================================
-    // انتظار الصور
-    // ==================================================
-
-    const images = [...reportContent.querySelectorAll("img")];
+    const images =
+      [...reportClone.querySelectorAll("img")];
 
     await Promise.all(
       images.map(img => {
-        if (img.complete && img.naturalWidth > 0) {
+        if (
+          img.complete &&
+          img.naturalWidth > 0
+        ) {
           return Promise.resolve();
         }
 
         return new Promise(resolve => {
           img.onload = resolve;
           img.onerror = resolve;
-
           setTimeout(resolve, 3000);
         });
       })
     );
 
-    // ==================================================
-    // إعطاء المتصفح وقتًا لتطبيق تنسيق PDF
-    // ==================================================
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
 
     await new Promise(resolve =>
       requestAnimationFrame(() =>
-        requestAnimationFrame(() =>
-          setTimeout(resolve, 250)
-        )
+        requestAnimationFrame(resolve)
       )
     );
 
-    // ==================================================
-    // إعداد PDF
-    // ==================================================
+    const pdfBlob =
+      await html2pdf()
+        .set({
+          margin: 8,
 
-    const options = {
-      margin: [8, 8, 8, 8],
+          filename:
+            `${safeName}.pdf`,
 
-      filename: `${safeName}.pdf`,
+          image: {
+            type: "jpeg",
+            quality: 0.98
+          },
 
-      image: {
-        type: "jpeg",
-        quality: 0.98
-      },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            windowWidth: 794
+          },
 
-      html2canvas: {
-        scale: 2,
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait"
+          },
 
-        useCORS: true,
-        allowTaint: true,
+          pagebreak: {
+            mode: ["css", "legacy"],
+            avoid: [
+              ".report-section",
+              ".report-photo-item",
+              "img"
+            ]
+          }
+        })
+        .from(reportClone)
+        .outputPdf("blob");
 
-        backgroundColor: "#ffffff",
+    host.remove();
 
-        logging: false,
-
-        scrollX: 0,
-        scrollY: 0,
-
-        windowWidth: 794,
-
-        foreignObjectRendering: false
-      },
-
-      jsPDF: {
-        unit: "mm",
-        format: "a4",
-        orientation: "portrait",
-        compress: true
-      },
-
-      pagebreak: {
-        mode: ["css", "legacy"],
-
-        avoid: [
-          ".report-section",
-          ".report-photos",
-          "img",
-          "h2"
-        ]
-      }
-    };
-
-    // ==================================================
-    // مهم:
-    // نحول التقرير الحقيقي الظاهر نفسه
-    // وليس clone منفصل
-    // ==================================================
-
-    const pdfBlob = await html2pdf()
-      .set(options)
-      .from(reportContent)
-      .outputPdf("blob");
-
-    const pdfFile = new File(
-      [pdfBlob],
-      `${safeName}.pdf`,
-      {
-        type: "application/pdf"
-      }
-    );
-
-    // ==================================================
-    // إزالة تنسيق PDF وإرجاع الصفحة كما كانت
-    // ==================================================
-
-    pdfModeStyle.remove();
-    pdfModeStyle = null;
-
-    // ==================================================
-    // iPhone / iPad / الأجهزة التي تدعم مشاركة الملفات
-    // ==================================================
+    const pdfFile =
+      new File(
+        [pdfBlob],
+        `${safeName}.pdf`,
+        {
+          type: "application/pdf"
+        }
+      );
 
     if (
       navigator.share &&
@@ -619,10 +601,6 @@ $("programReportShareBtn").onclick = async () => {
       return;
     }
 
-    // ==================================================
-    // الكمبيوتر والمتصفحات الأخرى
-    // ==================================================
-
     const pdfUrl =
       URL.createObjectURL(pdfBlob);
 
@@ -634,9 +612,7 @@ $("programReportShareBtn").onclick = async () => {
       `${safeName}.pdf`;
 
     document.body.appendChild(link);
-
     link.click();
-
     link.remove();
 
     setTimeout(() => {
@@ -645,16 +621,12 @@ $("programReportShareBtn").onclick = async () => {
 
   } catch (error) {
 
-    if (pdfModeStyle) {
-      pdfModeStyle.remove();
-    }
+    console.error(
+      "Program PDF error:",
+      error
+    );
 
     if (error?.name !== "AbortError") {
-      console.error(
-        "Program PDF error:",
-        error
-      );
-
       alert(
         "تعذر إنشاء أو مشاركة ملف PDF"
       );
