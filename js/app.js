@@ -199,439 +199,91 @@ const reportTemplates = {
   $("programReportModal").classList.add("hidden");
   $("programReportModal").setAttribute("aria-hidden", "true");
 };
-const isMobilePrint = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-$("programReportPrintBtn").onclick = () => {
-  const reportContent = document.getElementById("programReportModalContent");
-  if (!reportContent) {
-    alert("تعذر العثور على محتوى التقرير");
-    return;
-  }
-if (isMobilePrint) {
-  window.print();
-  return;
-}
-  const printWindow = window.open("", "_blank", "width=900,height=1000");
-  const reportClone = reportContent.cloneNode(true);
+// افتح مستند طباعة مستقلاً حتى لا تقص نافذة المعاينة صفحات التقرير.
+const printProgramReport = () => {
+  if (printModernReport()) return;
+  const source = $("programReportModalContent")?.querySelector(".program-report-export");
+  if (!source) { alert("أنشئ التقرير أولًا"); return; }
+  const tab = window.open("", "_blank");
+  if (!tab) { alert("اسمح بالنوافذ المنبثقة لطباعة التقرير"); return; }
 
-  reportClone.querySelectorAll("button, .report-photo-actions, .photo-layout-selector").forEach(el => el.remove());
+  // نقل البيانات المعروضة نفسها دون اختلاق أرقام أو نسب.
+  const clean = source.cloneNode(true);
+  clean.querySelectorAll("style,script,button,input,select,.photo-layout-selector,.report-photo-actions,.photo-btn").forEach(el=>el.remove());
+  clean.querySelectorAll("[contenteditable]").forEach(el=>el.removeAttribute("contenteditable"));
+  const sections = [...clean.querySelectorAll(".report-section")];
+  sections.forEach(section=>{
+    section.querySelectorAll("[style]").forEach(el=>el.removeAttribute("style"));
+    section.removeAttribute("style");
+    if (section.querySelector(".report-photos")) section.classList.add("evidence");
+  });
+  const heading = clean.querySelector("h1")?.textContent?.trim() || "تقرير برنامج التوجيه والإرشاد";
+  const schoolName = $("schoolLabel")?.textContent?.trim() || "اسم المدرسة غير مدخل";
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="ar" dir="rtl">
-    <head>
-      <meta charset="UTF-8">
-      <title>تقرير البرنامج</title>
-      <style>
-        @page { size: A4 portrait; margin: 8mm; }
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: #fff; }
-        body {
-          font-family: Arial, Tahoma, sans-serif;
-          direction: rtl;
-          color: #163c39;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        h1 {
-          margin: 0 0 12px !important;
-          padding: 12px 16px !important;
-          text-align: center !important;
-          color: #075e54 !important;
-          background: #eaf5f2 !important;
-          border-right: 6px solid #d4af37 !important;
-          border-bottom: 3px solid #d4af37 !important;
-          border-radius: 10px !important;
-          font-size: 23px !important;
-          line-height: 1.35 !important;
-        }
-        .report-section {
-          margin: 0 0 8px !important;
-          padding: 10px 12px !important;
-          background: #f8fbfa !important;
-          border: 1px solid #d7e7e2 !important;
-          border-right: 5px solid #0f766e !important;
-          border-radius: 10px !important;
-          box-shadow: none !important;
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-        .report-section h2 {
-          margin: -10px -12px 8px !important;
-          padding: 7px 12px !important;
-          background: linear-gradient(135deg, #0f766e, #115e59) !important;
-          color: #fff !important;
-          border: 0 !important;
-          border-radius: 9px 9px 4px 4px !important;
-          font-size: 16px !important;
-          line-height: 1.4 !important;
-        }
-        p, li { font-size: 12.5px !important; line-height: 1.6 !important; }
-        p { margin: 4px 0 !important; }
-        ul { margin: 4px 0 !important; padding-right: 20px !important; }
-        .report-photos {
-          display: grid !important;
-          grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)) !important;
-          gap: 8px !important;
-          width: 100% !important;
-          margin-top: 8px !important;
-        }
-        .report-photos img {
-          width: 100% !important;
-          height: 135px !important;
-          object-fit: cover !important;
-          border: 1px solid #d7e7e2 !important;
-          border-radius: 8px !important;
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-        }
-        button, .report-photo-actions, .photo-layout-selector { display: none !important; }
-      </style>
-    </head>
-    <body>${reportClone.innerHTML}</body>
-    </html>
-  `);
-
-  printWindow.document.close();
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 500);
+  const printCss = `
+    @page { size: A4 portrait; margin: 13mm 14mm; }
+    * { box-sizing: border-box; }
+    html,body { direction: rtl; margin: 0; }
+    body { font-family: Tahoma,Arial,sans-serif; color:#173d39; background:#f2f5f2; }
+    .actions-print { display:flex; justify-content:center; align-items:center; gap:12px; padding:12px; background:#eaf3ef; }
+    .actions-print button { padding:11px 24px; font:700 15px Tahoma,Arial,sans-serif; border:0; border-radius:9px; background:#086453; color:white; cursor:pointer; }
+    .actions-print span { font-size:12px; }
+    .sheet { background:white; width:190mm; max-width:100%; margin:12px auto; padding:13mm 12mm; border:1px solid #dce7df; }
+    .report-masthead { display:flex; justify-content:space-between; align-items:center; gap:15px; font-size:11px; font-weight:700; line-height:1.8; padding-bottom:8px; border-bottom:2px solid #b49447; }
+    .ministry { color:#08735e; font-weight:800; font-size:15px; }
+    .hero { position:relative; margin:12px 0 14px; padding:18px 18px 21px; color:white; background:linear-gradient(125deg,#095a50,#0c806e); border-radius:5px; overflow:hidden; }
+    .hero:after { content:""; position:absolute; width:130px; height:130px; background:rgba(240,210,128,.18); transform:rotate(40deg); left:-40px; top:-74px; }
+    .hero .kicker { font-size:12px; opacity:.9; }
+    .hero h1 { color:#fff; font-size:23px; line-height:1.55; margin:5px 0; padding:0; border:0; text-align:right; background:none; }
+    .meta { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:0 0 15px; }
+    .meta div { padding:9px; background:#f4f7f3; border:1px solid #d8e6dc; border-radius:6px; min-width:0; }
+    .meta strong { display:block; color:#076553; margin-bottom:4px; font-size:11px; }
+    .meta span { font-size:11.5px; overflow-wrap:anywhere; }
+    .program-report-export { width:100%; padding:0; margin:0; box-shadow:none; background:white; border:0; }
+    .program-report-export > h1 { display:none; }
+    .report-section { background:#fff; margin:0 0 11px; padding:0 0 10px; border:1px solid #dce6df; border-radius:6px; box-shadow:none; break-inside:avoid; page-break-inside:avoid; overflow:visible; }
+    .report-section h2 { margin:0 0 8px; background:#0a6657; color:#fff; padding:7px 12px; font-weight:800; font-size:13.5px; border:0; border-radius:5px 5px 0 0; }
+    .report-section p,.report-section li { font-size:12.5px; line-height:1.75; color:#243d39; margin:4px 12px; white-space:normal; overflow-wrap:break-word; }
+    .report-section ul { padding-right:22px; margin:4px 12px; }
+    .report-photos { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; padding:4px 10px 8px; align-items:start; }
+    .report-photos img { display:block; width:100%; height:125px; object-fit:contain; background:#f6f8f5; border:1px solid #cddfd5; border-radius:5px; break-inside:avoid; }
+    .report-section.evidence { break-inside:auto; page-break-inside:auto; }
+    .report-section.evidence:has(.report-photos:empty) { display:none; }
+    .report-foot { display:flex; justify-content:space-between; gap:15px; border-top:2px solid #b49447; padding-top:9px; font-size:10.5px; margin-top:13px; }
+    @media print {
+      html,body { background:#fff !important; }
+      body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .actions-print { display:none !important; }
+      .sheet { width:100%; max-width:none; margin:0; padding:0; border:0; }
+      .report-section { break-inside:avoid; }
+      .report-section.evidence { break-inside:auto; }
+      .report-photos img { height:35mm; }
+      .report-masthead,.hero,.meta,.report-foot { break-inside:avoid; }
+    }
+    @media screen and (max-width:650px) { .sheet {padding:12px;margin:0;} .hero h1{font-size:19px;} .meta {grid-template-columns:1fr 1fr;} .report-photos{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  `;
+  // نبني مستند طباعة مستقلًا حتى لا تنتقل إليه قواعد لوحة التحكم التي تضغط الصفحات.
+  tab.document.open();
+  tab.document.write('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>التقرير الوزاري الحديث</title></head><body><div class="actions-print"><button id="goPrint">طباعة / حفظ PDF</button><span>اختر حفظ PDF من نافذة الطباعة للمشاركة</span></div><main class="sheet"><header class="report-masthead"><div><div class="ministry">وزارة التعليم</div><div>تقرير برامج التوجيه والإرشاد</div></div><div id="schoolText"></div></header><section class="hero"><div class="kicker">تقرير تنفيذ برنامج</div><h1 id="reportHeading"></h1></section><div class="meta"><div><strong>المدرسة</strong><span id="metaSchool"></span></div><div><strong>تاريخ التنفيذ</strong><span>يُحدد من المدرسة</span></div><div><strong>عدد المستفيدين</strong><span>يُحدد من المدرسة</span></div></div><div id="reportBody"></div><footer class="report-foot"><span>الموجّه الطلابي: يوسف العنزي</span><span>تقرير توثيقي — تُستكمل البيانات الفعلية قبل الاعتماد</span></footer></main></body></html>');
+  tab.document.close();
+  const style = tab.document.createElement("style");
+  style.textContent = printCss;
+  tab.document.head.appendChild(style);
+  tab.document.getElementById("schoolText").textContent = schoolName;
+  tab.document.getElementById("metaSchool").textContent = schoolName;
+  tab.document.getElementById("reportHeading").textContent = heading;
+  tab.document.getElementById("reportBody").appendChild(tab.document.importNode(clean,true));
+  tab.document.getElementById("goPrint").onclick = () => tab.print();
+  tab.focus();
 };
-$("programReportShareBtn").onclick = async () => {
-  const reportContent =
-    document.getElementById("programReportModalContent");
-
-  if (!reportContent) {
-    alert("تعذر العثور على محتوى التقرير");
+// زر الطباعة القديم أزيل؛ التصدير عبر PDF فقط.
+$("programReportShareBtn").onclick = () => {
+  if (!$("programReportModalContent")?.querySelector("#modernProgramReport")) {
+    alert("لإصدار PDF احترافي، اختر النموذج الرسمي الحالي ثم أنشئ التقرير.");
     return;
   }
-
-  const isIOS =
-    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" &&
-     navigator.maxTouchPoints > 1);
-
-  // ==========================================
-  // iPhone / iPad
-  // نستخدم محرك Safari الأصلي للعربية
-  // ==========================================
-  if (isIOS) {
-    document.body.classList.add("program-native-print");
-
-    const style = document.createElement("style");
-    style.id = "ios-program-print-style";
-
-    style.textContent = `
-      @page {
-        size: A4 portrait;
-        margin: 8mm;
-      }
-
-      @media print {
-
-        body.program-native-print > * {
-          visibility: hidden !important;
-        }
-
-        body.program-native-print
-        #programReportModal,
-        body.program-native-print
-        #programReportModal * {
-          visibility: visible !important;
-        }
-
-        body.program-native-print
-        #programReportModal {
-          display: block !important;
-          position: absolute !important;
-          inset: 0 !important;
-          width: 100% !important;
-          height: auto !important;
-          overflow: visible !important;
-          background: #ffffff !important;
-        }
-
-        body.program-native-print
-        #programReportModalContent {
-          display: block !important;
-          position: relative !important;
-          width: 100% !important;
-          max-width: none !important;
-          height: auto !important;
-          overflow: visible !important;
-          direction: rtl !important;
-          background: #ffffff !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-
-        #programReportModalContent
-        .program-report-export {
-          width: 100% !important;
-          max-width: none !important;
-          direction: rtl !important;
-        }
-
-        #programReportModalContent
-        .report-section {
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-        }
-
-        #programReportModalContent
-        .report-section h2 {
-          color: #ffffff !important;
-          -webkit-text-fill-color: #ffffff !important;
-          background: #0f766e !important;
-          background-image: none !important;
-        }
-
-        #programReportModalContent p,
-        #programReportModalContent li {
-          color: #263b39 !important;
-          -webkit-text-fill-color: #263b39 !important;
-          direction: rtl !important;
-          text-align: right !important;
-        }
-
-        #programReportModalContent
-        .report-photos {
-          display: grid !important;
-          grid-template-columns:
-            repeat(2, 1fr) !important;
-          gap: 8px !important;
-        }
-
-        #programReportModalContent
-        .report-photos img {
-          display: block !important;
-          width: 100% !important;
-          height: 150px !important;
-          object-fit: cover !important;
-          break-inside: avoid !important;
-        }
-
-        #programReportModalContent button,
-        #programReportModalContent
-        .report-photo-actions,
-        #programReportModalContent
-        .photo-layout-selector,
-        #programReportModalContent
-        input[type="file"],
-        #programReportModalTitle,
-        #programReportCloseBtn,
-        #programReportPrintBtn,
-        #programReportShareBtn {
-          display: none !important;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 300)
-    );
-
-    window.print();
-
-    setTimeout(() => {
-      document.body.classList.remove(
-        "program-native-print"
-      );
-
-      document.getElementById(
-        "ios-program-print-style"
-      )?.remove();
-    }, 1500);
-
-    return;
-  }
-
-  // ==========================================
-  // Laptop / Desktop
-  // ==========================================
-
-  if (typeof html2pdf === "undefined") {
-    alert("تعذر تحميل أداة إنشاء PDF");
-    return;
-  }
-
-  const programName =
-    $("programSelect")?.value ||
-    "تقرير_برنامج";
-
-  const safeName = programName
-    .replace(/[\\/:*?"<>|]/g, "")
-    .replace(/\s+/g, "_");
-
-  try {
-
-    const reportClone =
-      reportContent.cloneNode(true);
-
-    reportClone
-      .querySelectorAll(
-        "button, .report-photo-actions, .photo-layout-selector, input[type='file']"
-      )
-      .forEach(el => el.remove());
-
-    const host =
-      document.createElement("div");
-
-    Object.assign(host.style, {
-      position: "fixed",
-      left: "0",
-      top: "0",
-      width: "794px",
-      background: "#ffffff",
-      zIndex: "999999",
-      pointerEvents: "none"
-    });
-
-    Object.assign(reportClone.style, {
-      width: "794px",
-      maxWidth: "794px",
-      background: "#ffffff",
-      direction: "rtl"
-    });
-
-    host.appendChild(reportClone);
-    document.body.appendChild(host);
-
-    const images =
-      [...reportClone.querySelectorAll("img")];
-
-    await Promise.all(
-      images.map(img => {
-        if (
-          img.complete &&
-          img.naturalWidth > 0
-        ) {
-          return Promise.resolve();
-        }
-
-        return new Promise(resolve => {
-          img.onload = resolve;
-          img.onerror = resolve;
-          setTimeout(resolve, 3000);
-        });
-      })
-    );
-
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
-
-    await new Promise(resolve =>
-      requestAnimationFrame(() =>
-        requestAnimationFrame(resolve)
-      )
-    );
-
-    const pdfBlob =
-      await html2pdf()
-        .set({
-          margin: 8,
-
-          filename:
-            `${safeName}.pdf`,
-
-          image: {
-            type: "jpeg",
-            quality: 0.98
-          },
-
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: "#ffffff",
-            logging: false,
-            windowWidth: 794
-          },
-
-          jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait"
-          },
-
-          pagebreak: {
-            mode: ["css", "legacy"],
-            avoid: [
-              ".report-section",
-              ".report-photo-item",
-              "img"
-            ]
-          }
-        })
-        .from(reportClone)
-        .outputPdf("blob");
-
-    host.remove();
-
-    const pdfFile =
-      new File(
-        [pdfBlob],
-        `${safeName}.pdf`,
-        {
-          type: "application/pdf"
-        }
-      );
-
-    if (
-      navigator.share &&
-      navigator.canShare &&
-      navigator.canShare({
-        files: [pdfFile]
-      })
-    ) {
-      await navigator.share({
-        title: programName,
-        files: [pdfFile]
-      });
-
-      return;
-    }
-
-    const pdfUrl =
-      URL.createObjectURL(pdfBlob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = pdfUrl;
-    link.download =
-      `${safeName}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(pdfUrl);
-    }, 5000);
-
-  } catch (error) {
-
-    console.error(
-      "Program PDF error:",
-      error
-    );
-
-    if (error?.name !== "AbortError") {
-      alert(
-        "تعذر إنشاء أو مشاركة ملف PDF"
-      );
-    }
-  }
+  void createModernPdf("share");
 };
       await refreshAll();
     }catch(e){$("loginMessage").textContent=e.message;$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}
@@ -650,11 +302,216 @@ function loadProgramTemplates() {
     select.appendChild(option);
   });
 }
+const MODERN_REPORT_CSS = `
+  .modern-report { direction:rtl; color:#193a38; background:#fff; font-family:Tahoma,Arial,sans-serif; font-size:13px; line-height:1.65; }
+  .modern-report * { box-sizing:border-box; }
+  .modern-report .mr-sheet { width:100%; max-width:210mm; margin:0 auto; padding:18px 22px 12px; background:#fff; }
+  .modern-report .mr-header { display:grid; grid-template-columns:1fr 1.8fr; align-items:start; gap:14px; border-bottom:4px solid #b79d62; padding:3px 3px 12px; }
+  .modern-report .mr-gov { color:#08776b; font-size:13px; font-weight:800; }
+  .modern-report .mr-school { font-size:11px; line-height:1.9; text-align:left; }
+  .modern-report .mr-banner { background:linear-gradient(120deg,#0b7464,#06554e); color:white; border-radius:0 0 24px 24px; padding:15px 22px; margin:0 0 14px; border-bottom:5px solid #d8bd7c; }
+  .modern-report .mr-banner .mr-kicker { font-size:12px; color:#e3f3ef; }
+  .modern-report .mr-banner h1 { font-size:23px; margin:2px 0 0; color:white; font-weight:900; line-height:1.5; text-align:center; }
+  .modern-report .mr-banner .mr-editable { color:white; }
+  .modern-report .mr-panel { border:1px solid #c4dcd5; border-radius:13px; margin:0 0 12px; padding:18px 12px 11px; position:relative; background:#fff; break-inside:avoid; }
+  .modern-report .mr-tag { position:relative; display:table; margin:-31px 0 12px auto; min-width:145px; border-radius:10px 10px 4px 10px; background:linear-gradient(90deg,#056258,#0b8a7b); color:white; padding:4px 17px; font-weight:900; font-size:14px; }
+  .modern-report .mr-facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:8px 0 13px; }
+  .modern-report .mr-fact { background:#f5faf8; border:1px solid #c9ded7; border-radius:10px; padding:9px 7px; min-height:76px; text-align:center; overflow-wrap:anywhere; }
+  .modern-report .mr-fact b { display:block; font-size:12px; color:#096757; margin-bottom:4px; }
+  .modern-report .mr-fact span { display:block; font-size:12px; }
+  .modern-report .mr-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modern-report p { margin:3px 3px 4px; }
+  .modern-report ul { margin:4px 0; padding-right:22px; }
+  .modern-report li { margin-bottom:3px; }
+  .modern-report .mr-goals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .modern-report .mr-goal { background:#f6faf8; border-radius:9px; border:1px solid #e0e9e4; padding:9px; display:flex; align-items:center; gap:7px; }
+  .modern-report .mr-goal i { color:#0b776a; font-size:18px; font-style:normal; }
+  .modern-report .mr-photos { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  .modern-report .mr-photo { margin:0; border:1px solid #d6e5df; border-radius:10px; overflow:hidden; background:#f6f9f7; break-inside:avoid; }
+  .modern-report .mr-photo img { display:block; width:100%; height:135px; object-fit:cover; }
+  .modern-report .mr-photo figcaption { font-size:11px; text-align:center; padding:4px; }
+  .modern-report .mr-empty { color:#697e7b; font-size:12px; padding:10px 0; }
+  .modern-report .mr-metric { display:flex; align-items:center; gap:10px; }
+  .modern-report .mr-metric strong { border:4px solid #0c7467; background:#f0f8f5; border-radius:50%; width:82px; height:82px; flex-shrink:0; display:grid; place-items:center; font-size:17px; color:#0c6558; }
+  .modern-report .mr-footer { border-top:4px solid #b99e64; background:linear-gradient(90deg,#065b52,#078272); color:white; border-radius:16px 16px 0 0; display:flex; justify-content:space-between; gap:10px; padding:12px 16px; font-size:12px; }
+  .modern-report .mr-editable { min-width:14px; outline-offset:2px; border-radius:2px; }
+  .modern-report .mr-editable:focus { outline:2px solid #c6a654; background:#fff9e8; color:#173e38; }
+  .mr-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:#eef6f3; padding:12px; border-radius:12px; margin:0 0 15px; }
+  .mr-controls label { cursor:pointer; font-size:13px; background:#086b5e; padding:9px 13px; border-radius:8px; color:#fff; }
+  .mr-controls input { display:none; }
+  .mr-controls small { color:#526963; }
+  @media(max-width:650px) { .modern-report .mr-sheet{padding:12px 9px;} .modern-report .mr-header{grid-template-columns:1fr 1fr;} .modern-report .mr-facts{grid-template-columns:repeat(2,minmax(0,1fr));} .modern-report .mr-pair{grid-template-columns:1fr;} .modern-report .mr-banner h1{font-size:19px;} .modern-report .mr-photos{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @page { size:A4 portrait; margin:11mm; }
+  @media print {
+    html, body { margin:0!important; padding:0!important; background:white!important; }
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .modern-report .mr-sheet { width:100%; max-width:none; margin:0; padding:0; }
+    .modern-report .mr-panel { break-inside:avoid; page-break-inside:avoid; }
+    .modern-report .mr-panel.mr-evidence { break-inside:auto; page-break-inside:auto; }
+    .modern-report .mr-photos { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .modern-report .mr-photo img { height:37mm; }
+    .mr-controls {display:none!important;}
+    .modern-report .mr-banner,.modern-report .mr-header,.modern-report .mr-fact,.modern-report .mr-goal,.modern-report .mr-footer { break-inside:avoid; }
+  }
+`;
+
+function buildModernReport(programName, report) {
+  const safe = esc;
+  const school = ($("schoolLabel")?.textContent || "ثانوية مجمع الأمير فهد بن سلطان").trim();
+  const goalCards = report.goals.map(g => `<div class="mr-goal"><i>◉</i><span class="mr-editable" contenteditable="true">${safe(g)}</span></div>`).join("");
+  const editable = (text, cls="") => `<span class="mr-editable ${cls}" contenteditable="true">${safe(text)}</span>`;
+  return `<article class="modern-report" id="modernProgramReport" dir="rtl"><div class="mr-sheet">
+    <header class="mr-header"><div class="mr-gov">وزارة التعليم<br><span style="font-size:11px">Ministry of Education</span></div><div class="mr-school">الإدارة العامة للتعليم بمنطقة تبوك<br>${safe(school)}</div></header>
+    <div class="mr-banner"><div class="mr-kicker">تقرير تنفيذ برنامج • التوجيه والإرشاد الطلابي</div><h1>${editable(programName)}</h1></div>
+    <div class="mr-facts">
+      <div class="mr-fact"><b>▦ تاريخ التنفيذ</b>${editable("يُحدد تاريخ التنفيذ")}</div>
+      <div class="mr-fact"><b>◉ منفذ البرنامج</b>${editable("الموجّه الطلابي")}</div>
+      <div class="mr-fact"><b>♟ عدد المستفيدين</b>${editable("يُحدد العدد")}</div>
+      <div class="mr-fact"><b>⌖ مكان التنفيذ</b>${editable("يُحدد المكان")}</div>
+    </div>
+    <div class="mr-pair"><section class="mr-panel"><h2 class="mr-tag">الفئة المستهدفة</h2><p>${editable(report.target)}</p></section>
+      <section class="mr-panel"><h2 class="mr-tag">نبذة عن البرنامج</h2><p>${editable(report.description)}</p></section></div>
+    <section class="mr-panel"><h2 class="mr-tag">أهداف البرنامج</h2><div class="mr-goals">${goalCards}</div></section>
+    <section class="mr-panel"><h2 class="mr-tag">آلية التنفيذ</h2><p>${editable(report.implementation)}</p></section>
+    <section class="mr-panel mr-evidence"><h2 class="mr-tag">صور من تنفيذ البرنامج</h2><div class="mr-controls"><label>📷 تصوير / إضافة صور<input type="file" accept="image/*" capture="environment" multiple class="mr-photo-input"></label><label>🖼️ صور من الاستديو<input type="file" accept="image/*" multiple class="mr-photo-input"></label><small>يمكن إضافة عدة صور مع تعليق لكل صورة</small></div><div class="mr-photos" id="modernPhotos"><div class="mr-empty">لا توجد صور مضافة — أضف الشواهد قبل الاعتماد</div></div></section>
+    <div class="mr-pair"><section class="mr-panel"><h2 class="mr-tag">أبرز النتائج</h2><p>${editable(report.results)}</p></section>
+    <section class="mr-panel"><h2 class="mr-tag">قياس الأثر</h2><div class="mr-metric"><strong class="mr-editable" contenteditable="true">—</strong><p>${editable("أدخل نتيجة قياس الأثر الفعلية وطريقة قياسها. لا تُعتمد نسبة دون بيانات موثقة.")}</p></div></section></div>
+    <section class="mr-panel"><h2 class="mr-tag">مؤشرات النجاح</h2><p>${editable(report.indicators)}</p></section>
+    <section class="mr-panel"><h2 class="mr-tag">التوصيات</h2><p>${editable(report.recommendations)}</p></section>
+    <footer class="mr-footer"><span>${safe(school)} • تعليم تبوك</span><span>الموجّه الطلابي: يوسف العنزي</span></footer>
+  </div></article>`;
+}
+
+function openModernReport(programName, report) {
+  const modal=$("programReportModal"), content=$("programReportModalContent");
+  content.innerHTML=`<style>${MODERN_REPORT_CSS}</style>${buildModernReport(programName,report)}`;
+  $("programReportModalTitle").textContent=programName;
+  modal.classList.remove("hidden"); modal.setAttribute("aria-hidden","false");
+  content.querySelectorAll(".mr-photo-input").forEach(input=>input.addEventListener("change",async e=>{
+    const photos=content.querySelector("#modernPhotos");
+    photos.querySelector(".mr-empty")?.remove();
+    const files=[...(e.target.files||[])].filter(f=>f.type.startsWith("image/"));
+    for (const f of files) {
+      const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f);});
+      const figure=document.createElement("figure"); figure.className="mr-photo";
+      const image=document.createElement("img"); image.src=data; image.alt="شاهد من تنفيذ البرنامج";
+      const caption=document.createElement("figcaption"); caption.textContent="اكتب وصف الصورة"; caption.contentEditable="true";caption.className="mr-editable";
+      figure.append(image,caption);photos.appendChild(figure);
+    }
+    e.target.value="";
+  }));
+}
+
+// تصدير مستقل: صفحة PDF ثابتة بدلاً من نافذة طباعة المتصفح.
+async function createModernPdf(mode = "download") {
+  const source = $("programReportModalContent")?.querySelector("#modernProgramReport");
+  if (!source) { alert("أنشئ التقرير الرسمي أولًا"); return; }
+  if (typeof html2canvas !== "function" || !window.jspdf?.jsPDF) {
+    alert("تعذر تحميل مكتبات PDF. تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة."); return;
+  }
+  const photos = source.querySelectorAll(".mr-photo").length;
+  if (photos > 4) {
+    alert("لصفحة A4 واحدة واضحة، استخدم حتى أربع صور؛ ثم أعد إنشاء التقرير."); return;
+  }
+  const buttons = [$("programReportShareBtn")];
+  buttons.forEach(button => { if (button) button.disabled = true; });
+  let stage;
+  try {
+    // نرسم القالب بعرض A4 مستقل؛ لا نلتقط عنصرًا يقع خارج شاشة Safari.
+    const W = 794, H = 1123, margin = 10;
+    stage = document.createElement("div");
+    stage.id = "directPdfStage";
+    stage.dir = "rtl";
+    stage.style.cssText = `position:fixed;top:0;left:0;width:${W}px;max-width:none;z-index:2147483646;background:white;pointer-events:none;overflow:visible;`;
+    const style = document.createElement("style");
+    style.textContent = `
+      #directPdfStage .modern-report { width:${W}px!important; max-width:none!important; margin:0!important; background:#fff!important; }
+      #directPdfStage .mr-sheet { width:${W}px!important;max-width:none!important;margin:0!important;padding:14px 20px 10px!important; }
+      #directPdfStage .mr-header { padding:4px 5px 8px!important; gap:10px!important; }
+      #directPdfStage .mr-banner { padding:10px 17px!important;margin:0 0 9px!important; }
+      #directPdfStage .mr-banner h1 { font-size:23px!important;line-height:1.3!important; }
+      #directPdfStage .mr-facts { display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;margin:5px 0 8px!important; }
+      #directPdfStage .mr-fact { min-height:0!important;padding:6px!important; }
+      #directPdfStage .mr-fact b,#directPdfStage .mr-fact span { font-size:11px!important; }
+      #directPdfStage .mr-pair { display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important; }
+      #directPdfStage .mr-panel { padding:16px 10px 7px!important;margin:0 0 8px!important; }
+      #directPdfStage .mr-tag { font-size:13px!important;padding:4px 10px!important;margin-top:-23px!important; }
+      #directPdfStage p,#directPdfStage li { font-size:12px!important;line-height:1.45!important;margin:2px 0!important; }
+      #directPdfStage .mr-goals { display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important; }
+      #directPdfStage .mr-goal { padding:5px!important;font-size:11px!important; }
+      #directPdfStage .mr-photos { display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important; }
+      #directPdfStage .mr-photo img { height:112px!important;width:100%!important;object-fit:cover!important; }
+      #directPdfStage .mr-photo figcaption { font-size:10px!important;padding:3px!important; }
+      #directPdfStage .mr-metric strong { width:48px!important;height:48px!important;font-size:15px!important; }
+      #directPdfStage .mr-footer { font-size:11px!important;padding:6px!important; }
+      #directPdfStage .mr-controls,#directPdfStage .mr-empty { display:none!important; }
+    `;
+    stage.appendChild(style);
+    const clone = source.cloneNode(true);
+    clone.querySelectorAll(".mr-controls,.mr-empty,button,input,script").forEach(el => el.remove());
+    clone.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
+    await Promise.all(Array.from(stage.querySelectorAll("img")).map(img => img.decode?.().catch(()=>{}) || Promise.resolve()));
+    if (document.fonts?.ready) await document.fonts.ready;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const contentHeight = Math.ceil(Math.max(clone.scrollHeight, stage.scrollHeight));
+    const factor = Math.min(1, (H - 2*margin) / contentHeight);
+    if (factor < 0.76) {
+      alert(`المحتوى أطول من مساحة صفحة A4 واحدة واضحة (${Math.round(factor*100)}٪). اختصر النصوص أو قلّل الصور ثم أعد المحاولة.`);
+      return;
+    }
+    // التقط كامل الارتفاع أولًا ثم ضعه داخل صفحة A4؛ لا تقص الصورة إلى 1123 بكسل.
+    const originalCanvas = await html2canvas(clone, {
+      backgroundColor:"#ffffff", scale:1.7, useCORS:true, logging:false,
+      width:W, height:contentHeight, windowWidth:W,
+      windowHeight:Math.max(H,contentHeight),scrollX:0,scrollY:0
+    });
+    const page = document.createElement("canvas");
+    page.width = W*2; page.height = H*2;
+    const ctx = page.getContext("2d");
+    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,page.width,page.height);
+    const drawW = W*2*factor, drawH = contentHeight*2*factor;
+    ctx.drawImage(originalCanvas, (page.width-drawW)/2,margin*2,drawW,drawH);
+    const pdf = new window.jspdf.jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
+    pdf.addImage(page.toDataURL("image/jpeg",0.92),"JPEG",0,0,210,297,undefined,"FAST");
+    const reportTitle = source.querySelector(".mr-banner h1")?.textContent?.trim() || "التوجيه-الطلابي";
+    const safeName = reportTitle.replace(/[\\/:*?"<>|]/g, "-").slice(0, 65);
+    const name = `تقرير-${safeName}.pdf`;
+    if (mode === "share" && navigator.share && typeof File === "function") {
+      const file = new File([pdf.output("blob")],name,{type:"application/pdf"});
+      if (navigator.canShare?.({files:[file]})) {
+        try { await navigator.share({files:[file],title:"تقرير البرنامج"}); return; }
+        catch(error) { if (error?.name === "AbortError") return; }
+      }
+    }
+    pdf.save(name);
+  } catch(error) {
+    console.error("PDF generation failed",error);
+    alert("تعذر إنشاء PDF. افحص اتصال الإنترنت والصور المرفوعة، ثم حاول مجددًا.");
+  } finally {
+    stage?.remove();
+    buttons.forEach(button => { if(button) button.disabled=false; });
+  }
+}
+
+function printModernReport() {
+  if (!$("programReportModalContent")?.querySelector("#modernProgramReport")) return false;
+  void createModernPdf("download");
+  return true;
+}
+
 function openProgramReport() {
   const select = $("programSelect");
   const programName = select?.value;
 const templateSelect = $("reportTemplateSelect");
 const templateType = templateSelect?.value || "official";
+  if (templateType === "official") {
+    const record=reportTemplates[programName];
+    if(!record) { alert("اختر برنامجًا صحيحًا"); return; }
+    openModernReport(programName,record);
+    return;
+  }
   if (!programName) {
     alert("اختر أحد البرامج أولاً");
     return;

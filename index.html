@@ -38,21 +38,18 @@
   <h2>منصة التوجيه الطلابي</h2>
 
   <div class="main-sections-grid">
-
     <button type="button" id="openIndicatorsSection" class="main-section-card"
-onclick="document.getElementById('indicatorsContainer').classList.remove('hidden'); document.getElementById('indicatorsToolbar').classList.remove('hidden'); document.getElementById('programReportsSection').classList.add('hidden');"      <strong>مؤشرات التوجيه الطلابي</strong>
- <span class="main-section-icon">📊</span>
-  
-<small>المؤشرات والتحليل والتقارير والمقارنات</small>
+      onclick="document.getElementById('indicatorsContainer').classList.remove('hidden'); document.getElementById('indicatorsToolbar').classList.remove('hidden'); document.getElementById('programReportsSection').classList.add('hidden');">
+      <span class="main-section-icon">📊</span>
+      <strong>مؤشرات التوجيه الطلابي</strong>
+      <small>المؤشرات والتحليل والتقارير والمقارنات</small>
     </button>
-
- <span class="main-section-icon">📋</span>
-   
-<button type="button" id="openProgramsSection" class="main-section-card"
-onclick="document.getElementById('programReportsSection').classList.remove('hidden'); document.getElementById('indicatorsContainer').classList.add('hidden'); document.getElementById('indicatorsToolbar').classList.add('hidden');"      <strong>برامج التوجيه والإرشاد</strong>
+    <button type="button" id="openProgramsSection" class="main-section-card"
+      onclick="document.getElementById('programReportsSection').classList.remove('hidden'); document.getElementById('indicatorsContainer').classList.add('hidden'); document.getElementById('indicatorsToolbar').classList.add('hidden');">
+      <span class="main-section-icon">📋</span>
+      <strong>برامج التوجيه والإرشاد</strong>
       <small>البرامج والتقارير والشواهد والصور</small>
     </button>
-
   </div>
 
 </section>
@@ -80,7 +77,7 @@ onclick="document.getElementById('programReportsSection').classList.remove('hidd
 <label for="reportTemplateSelect">اختر قالب التقرير:</label>
 
 <select id="reportTemplateSelect">
-  <option value="official">🏛️ النموذج الرسمي الحالي</option>
+  <option value="official">🏛️ النمط الوزاري الحديث (المعتمد)</option>
   <option value="photo">🖼️ النموذج البصري المصور</option>
   <option value="premium">⭐ النموذج المميز</option>
 </select>
@@ -125,19 +122,11 @@ onclick="document.getElementById('programReportsSection').classList.remove('hidd
       </div>
 
       <div class="modal-actions">
-        <button
-          id="programReportPrintBtn"
-          class="btn secondary"
-          type="button">
-          🖨️ طباعة
-        </button>
-
-
 <button
   id="programReportShareBtn"
   class="btn secondary"
   type="button">
-  📤 مشاركة PDF
+  📄 مشاركة / حفظ PDF
 </button>
         <button
           id="programReportCloseBtn"
@@ -154,7 +143,11 @@ onclick="document.getElementById('programReportsSection').classList.remove('hidd
 </div>
   <script src="js/config.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+ <script src="js/vendor/html2pdf.bundle.min.js"></script>
+  <script src="js/vendor/html2canvas.min.js"></script>
+  <script src="js/vendor/jspdf.umd.min.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/local-reports.js"></script>
+  <script src="js/cloud-reports.js"></script>
 </body>
 </html>

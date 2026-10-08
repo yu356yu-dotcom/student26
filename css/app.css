@@ -63,7 +63,7 @@
   border-radius: 10px;
 }
 
-#programReportModal #programReportContent {
+#programReportModal #programReportModalContent {
   padding: 24px;
   background: #f8fbfa;
 }
@@ -88,7 +88,7 @@
     font-size: 20px;
   }
 
-  #programReportModal #programReportContent {
+  #programReportModal #programReportModalContent {
     padding: 12px;
   }
 }
@@ -246,7 +246,7 @@
 }
 /* ===== طباعة تقرير البرنامج من الجوال ===== */
 @media print {
-  body * {
+  body:has(#programReportModal:not(.hidden)) * {
     visibility: hidden !important;
   }
 
@@ -339,4 +339,28 @@
   object-fit: cover !important;
   border: 2px solid #c9a227 !important;
   border-radius: 8px !important;
+}
+/* إصلاح موحد للطباعة: لا يغير تصميم الواجهة أثناء العرض */
+@page { size: A4 portrait; margin: 10mm; }
+@media print {
+  body:has(#programReportModal:not(.hidden)) { background: white !important; }
+  body:has(#programReportModal:not(.hidden)) #appView,
+  body:has(#programReportModal:not(.hidden)) #loginView,
+  body:has(#programReportModal:not(.hidden)) #analysisModal,
+  body:has(#programReportModal:not(.hidden)) #programReportModal .modal-head { display: none !important; }
+  body:has(#programReportModal:not(.hidden)) #programReportModal,
+  body:has(#programReportModal:not(.hidden)) #programReportModal .program-report-modal-card,
+  body:has(#programReportModal:not(.hidden)) #programReportModalContent {
+    display: block !important; position: static !important; inset: auto !important;
+    visibility: visible !important; width: 100% !important; max-width: none !important;
+    max-height: none !important; height: auto !important; overflow: visible !important;
+    padding: 0 !important; margin: 0 !important; border: 0 !important;
+    box-shadow: none !important; background: #fff !important;
+  }
+  body:has(#programReportModal:not(.hidden)) #programReportModalContent * { visibility: visible !important; }
+  #programReportModalContent .report-section { break-inside: auto !important; page-break-inside: auto !important; }
+  #programReportModalContent h1, #programReportModalContent h2, #programReportModalContent h3 { break-after: avoid-page !important; }
+  #programReportModalContent .report-photos img { max-width: 100% !important; object-fit: cover; break-inside: avoid !important; }
+  #programReportModalContent button, #programReportModalContent input, #programReportModalContent select,
+  #programReportModalContent .report-photo-actions, #programReportModalContent .photo-layout-selector { display: none !important; }
 }
